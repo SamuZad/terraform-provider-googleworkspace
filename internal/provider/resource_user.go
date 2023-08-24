@@ -1485,7 +1485,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return fmt.Errorf("timed out while waiting for %s to be updated", cc.resourceType)
 	})
 
-	if d.HasChange("primary_email") {
+	if d.HasChange("primary_email") && d.IsNewResource() == false {
 		old, _ := d.GetChange("primary_email")
 		oldPrimary := old.(string)
 	
