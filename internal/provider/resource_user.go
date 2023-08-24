@@ -1485,6 +1485,23 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return fmt.Errorf("timed out while waiting for %s to be updated", cc.resourceType)
 	})
 
+	if d.HasChange("primary_email") {
+		old, _ := d.GetChange("primary_email")
+		oldPrimary := old.(string)
+	
+		// Remove old primary pleeeeease
+
+		aliasesService, diags := GetUserAliasService(usersService)
+		if diags.HasError() {
+			return diags
+		}
+
+		err := aliasesService.Delete(d.Id(), oldPrimary).Do()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	if err != nil {
 		return diag.FromErr(err)
 	}
