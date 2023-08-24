@@ -1,6 +1,6 @@
 module github.com/hashicorp/terraform-provider-googleworkspace
 
-go 1.16
+go 1.20
 
 require (
 	github.com/hashicorp/errwrap v1.1.0
