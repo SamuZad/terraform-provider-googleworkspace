@@ -32,6 +32,8 @@ builds:
       goos: freebsd
     - goarch: arm64
       goos: windows
+    - goarch: amd64
+      goos: freebsd
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
 - format: zip
