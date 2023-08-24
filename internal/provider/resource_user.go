@@ -1241,6 +1241,16 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	// Strings
 
 	if d.HasChange("primary_email") {
+		if d.IsNewResource() == false {
+			emailupdate := directory.User{
+				PrimaryEmail:               primaryEmail,
+			}
+			_, err := usersService.Update(d.Id(), &emailupdate).Do()
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+		
 		userObj.PrimaryEmail = primaryEmail
 	}
 
