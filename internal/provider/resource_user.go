@@ -49,6 +49,7 @@ func diffSuppressEmails(k, old, new string, d *schema.ResourceData) bool {
 }
 
 func diffSuppressAliases(k, old, new string, d *schema.ResourceData) bool {
+	// The configAliases list returns an incorrect value if "aliases" is removed, rather than set to []
 	stateAliases, configAliases := d.GetChange("aliases")
 
 	stateList := listOfInterfacestoStrings(stateAliases.([]interface{}))
@@ -57,7 +58,7 @@ func diffSuppressAliases(k, old, new string, d *schema.ResourceData) bool {
 	sort.Strings(stateList)
 	sort.Strings(configList)
 
-	return reflect.DeepEqual(stateList, configList)
+	return stringInSlice(stateList, new)
 }
 
 func diffSuppressCustomSchemas(_, _, _ string, d *schema.ResourceData) bool {
