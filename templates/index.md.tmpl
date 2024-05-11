@@ -19,7 +19,7 @@ The Google Workspace provider provides resources to interact with Google Workspa
 ## Authorization
 This provider uses [Admin SDK](https://developers.google.com/admin-sdk) API methods to manage resources on a Workspace customer domain. There are multiple ways to set up proper authorization for a service account:
 
-* Enable [domain-wide delegation](#using-domain-wide-delegation) to impersonate a user that has super administrator privileges. You cannot directly grant super administrator privileges to service accounts.
+* Enable [domain-wide delegation](#using-domain-wide-delegation) to impersonate a user that has super administrator privileges. You cannot directly grant super administrator privileges to service accounts. Therefore **domain-wide delegation is necessary for managing resources that require super administrator privileges, such as other super administrator users**.
 
 * Assign [specific administrator roles](https://support.google.com/a/answer/9807615?hl=en&ref_topic=9832445) directly to the service account.
 
