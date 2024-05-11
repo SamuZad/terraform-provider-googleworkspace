@@ -263,14 +263,15 @@ func resourceGroupSettings() *schema.Resource {
 			},
 			"who_can_leave_group": {
 				Description: "Permission to leave the group. Possible values are:" +
+					"\n\t- `ALL_OWNERS_CAN_LEAVE`" +
 					"\n\t- `ALL_MANAGERS_CAN_LEAVE`" +
 					"\n\t- `ALL_MEMBERS_CAN_LEAVE`" +
 					"\n\t- `NONE_CAN_LEAVE`",
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "ALL_MEMBERS_CAN_LEAVE",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALL_MANAGERS_CAN_LEAVE",
-					"ALL_MEMBERS_CAN_LEAVE", "NONE_CAN_LEAVE"}, true)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALL_OWNERS_CAN_LEAVE",
+					"ALL_MANAGERS_CAN_LEAVE", "ALL_MEMBERS_CAN_LEAVE", "NONE_CAN_LEAVE"}, true)),
 			},
 			"who_can_contact_owner": {
 				Description: "Permission to contact owner of the group via web UI. Possible values are: " +

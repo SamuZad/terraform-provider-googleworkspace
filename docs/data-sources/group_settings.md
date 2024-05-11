@@ -91,6 +91,7 @@ output "who_can_join_sales" {
 	- `INVITED_CAN_JOIN`: Candidates for membership can be invited to join. 
 	- `CAN_REQUEST_TO_JOIN`: Non members can request an invitation to join.
 - `who_can_leave_group` (String) Permission to leave the group. Possible values are:
+	- `ALL_OWNERS_CAN_LEAVE`
 	- `ALL_MANAGERS_CAN_LEAVE`
 	- `ALL_MEMBERS_CAN_LEAVE`
 	- `NONE_CAN_LEAVE`
