@@ -13,6 +13,9 @@ Schema resource manages Google Workspace Schemas. Schema resides under the `http
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "googleworkspace_schema" "birthday" {
   schema_name = "birthday"
 
@@ -97,5 +100,8 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 terraform import googleworkspace_schema.birthday Ab0C_DEFGhIJKLmNopQ1Rs==
 ```

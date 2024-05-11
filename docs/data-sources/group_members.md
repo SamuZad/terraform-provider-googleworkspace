@@ -13,6 +13,9 @@ Group Members data source in the Terraform Googleworkspace provider. Group Membe
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_group" "sales" {
   email = "sales@example.com"
 }
@@ -54,5 +57,3 @@ Read-Only:
 - `role` (String)
 - `status` (String)
 - `type` (String)
-
-

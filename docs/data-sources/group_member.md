@@ -13,6 +13,9 @@ Group Member data source in the Terraform Googleworkspace provider. Group Member
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_group" "sales" {
   email = "sales@example.com"
 }
@@ -58,5 +61,3 @@ output "group_member_role" {
 	- `CUSTOMER`: The member represents all users in a domain. An email address is not returned and the ID returned is the customer ID. 
 	- `GROUP`: The member is another group. 
 	- `USER`: The member is a user.
-
-

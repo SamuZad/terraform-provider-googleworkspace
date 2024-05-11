@@ -13,6 +13,9 @@ User data source in the Terraform Googleworkspace provider. User resides under t
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_user" "dwight" {
   primary_email = "dwight.schrute@example.com"
 }
@@ -257,5 +260,3 @@ Read-Only:
 - `primary` (Boolean)
 - `type` (String)
 - `value` (String)
-
-

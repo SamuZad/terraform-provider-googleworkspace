@@ -4,15 +4,20 @@ page_title: "googleworkspace_user Resource - terraform-provider-googleworkspace"
 subcategory: ""
 description: |-
   User resource manages Google Workspace Users. User resides under the https://www.googleapis.com/auth/admin.directory.user client scope.
+  Additionally, the on_delete_data_transfer block requires the https://www.googleapis.com/auth/admin.datatransfer client scope.
 ---
 
 # googleworkspace_user (Resource)
 
 User resource manages Google Workspace Users. User resides under the `https://www.googleapis.com/auth/admin.directory.user` client scope.
+Additionally, the `on_delete_data_transfer` block requires the `https://www.googleapis.com/auth/admin.datatransfer` client scope.
 
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "googleworkspace_schema" "birthday" {
   schema_name = "birthday"
 
@@ -101,6 +106,19 @@ resource "googleworkspace_user" "dwight" {
     }
   }
 
+  on_delete_data_transfer {
+    new_data_owner_email = "mike.mikeson@example.com"
+
+    calendar_transfer          = true
+    calendar_release_resources = "TRUE"
+
+    drive_and_docs_transfer      = true
+    drive_and_docs_privacy_level = "PRIVATE"
+
+    looker_studio_transfer      = true
+    looker_studio_privacy_level = "PRIVATE"
+  }
+
   recovery_email = "dwightkschrute@example.com"
 }
 ```
@@ -130,6 +148,7 @@ resource "googleworkspace_user" "dwight" {
 - `keywords` (Block List) A list of the user's keywords. The maximum allowed data size is 1Kb. (see [below for nested schema](#nestedblock--keywords))
 - `languages` (Block List) A list of the user's languages. The maximum allowed data size is 1Kb. (see [below for nested schema](#nestedblock--languages))
 - `locations` (Block List) A list of the user's locations. The maximum allowed data size is 10Kb. (see [below for nested schema](#nestedblock--locations))
+- `on_delete_data_transfer` (Block List, Max: 1) Holds the information about data transfer prior to deletion of the user's account. The recipient and what gets transferred is customizable (see [below for nested schema](#nestedblock--on_delete_data_transfer))
 - `org_unit_path` (String) The full path of the parent organization associated with the user. If the parent organization is the top-level, it is represented as a forward slash (/).
 - `organizations` (Block List) A list of organizations the user belongs to. The maximum allowed data size is 10Kb. (see [below for nested schema](#nestedblock--organizations))
 - `password` (String, Sensitive) Stores the password for the user account. A password can contain any combination of ASCII characters. A minimum of 8 characters is required. The maximum length is 100 characters. As the API does not return the value of password, this field is write-only, and the value stored in the state will be what is provided in the configuration. The field is required on create and will be empty on import.
@@ -182,11 +201,7 @@ Read-Only:
 
 Required:
 
-- `type` (String) The address type. Acceptable values: 
-	- `custom`
-	- `home`
-	- `other`
-	- `work`
+- `type` (String) The address type. Acceptable values: `custom`, `home`, `other`, `work`.
 
 Optional:
 
@@ -218,11 +233,7 @@ Required:
 
 Required:
 
-- `type` (String) The type of the email account. Acceptable values:
-	- `custom`,
-	- `home`,
-	- `other`,
-	- `work`.
+- `type` (String) The type of the email account. Acceptable values: `custom`, `home`, `other`, `work`.
 
 Optional:
 
@@ -236,13 +247,7 @@ Optional:
 
 Required:
 
-- `type` (String) The type of external ID. If set to custom, customType must also be set. Acceptable values: 
-	- `account`
-	- `custom`
-	- `customer`
-	- `login_id`
-	- `network`
-	- `organization`
+- `type` (String) The type of external ID. If set to custom, customType must also be set. Acceptable values: `account`, `custom`, `customer`, `login_id`, `network`, `organization`.
 - `value` (String) The value of the ID.
 
 Optional:
@@ -255,22 +260,8 @@ Optional:
 
 Required:
 
-- `protocol` (String) An IM protocol identifies the IM network. The value can be a custom network or the standard network. Acceptable values: 
-	- `aim`
-	- `custom_protocol`
-	- `gtalk`
-	- `icq`
-	- `jabber`
-	- `msn`
-	- `net_meeting`
-	- `qq`
-	- `skype`
-	- `yahoo`
-- `type` (String) Acceptable values: 
-	- `custom`
-	- `home`
-	- `other`
-	- `work`
+- `protocol` (String) An IM protocol identifies the IM network. The value can be a custom network or the standard network. Acceptable values: `aim`, `custom_protocol`, `gtalk`, `icq`, `jabber`, `msn`, `net_meeting`, `qq`, `skype`, `yahoo`.
+- `type` (String) Acceptable values: `custom`, `home`, `other`, `work`.
 
 Optional:
 
@@ -285,11 +276,7 @@ Optional:
 
 Required:
 
-- `type` (String) Each entry can have a type which indicates standard type of that entry. For example, keyword could be of type occupation or outlook. In addition to the standard type, an entry can have a custom type and can give it any name. Such types should have the CUSTOM value as type and also have a customType value. Acceptable values: 
-	- `custom`
-	- `mission`
-	- `occupation`
-	- `outlook`
+- `type` (String) Each entry can have a type which indicates standard type of that entry. For example, keyword could be of type occupation or outlook. In addition to the standard type, an entry can have a custom type and can give it any name. Such types should have the CUSTOM value as type and also have a customType value. Acceptable values: `custom`, `mission`, `occupation`, `outlook`
 - `value` (String) Keyword.
 
 Optional:
@@ -312,10 +299,7 @@ Optional:
 
 Required:
 
-- `type` (String) The location type. Acceptable values: 
-	- `custom`
-	- `default`
-	- `desk`
+- `type` (String) The location type. Acceptable values: `custom`, `default`, `desk`
 
 Optional:
 
@@ -327,16 +311,29 @@ Optional:
 - `floor_section` (String) Floor section. More specific location within the floor. For example, if a floor is divided into sections A, B, and C, this field would identify one of those values.
 
 
+<a id="nestedblock--on_delete_data_transfer"></a>
+### Nested Schema for `on_delete_data_transfer`
+
+Required:
+
+- `new_data_owner_email` (String) The email of the recipient of the transferred data.
+
+Optional:
+
+- `calendar_release_resources` (String) Defaults to `FALSE`. Indicates if the user's calendar resources are released.
+- `calendar_transfer` (Boolean) Defaults to `true`. Indicates if the user's calendar data is transferred.
+- `drive_and_docs_privacy_level` (String) Defaults to `SHARED`. The privacy level of the transferred Drive and Docs data. Acceptable values: `PRIVATE`, `SHARED`.
+- `drive_and_docs_transfer` (Boolean) Defaults to `true`. Indicates if the user's Drive and Docs data is transferred.
+- `looker_studio_privacy_level` (String) Defaults to `SHARED`. The privacy level of the transferred Looker Studio data. Acceptable values: `PRIVATE`, `SHARED`.
+- `looker_studio_transfer` (Boolean) Defaults to `true`. Indicates if the user's Looker Studio data is transferred.
+
+
 <a id="nestedblock--organizations"></a>
 ### Nested Schema for `organizations`
 
 Required:
 
-- `type` (String) The type of organization. Acceptable values: 
-	- `domain_only`
-	- `school`
-	- `unknown`
-	- `work`.
+- `type` (String) The type of organization. Acceptable values: `domain_only`, `school`, `unknown`, `work`.
 
 Optional:
 
@@ -358,28 +355,7 @@ Optional:
 
 Required:
 
-- `type` (String) The type of phone number. Acceptable values: 
-	- `assistant`
-	- `callback`
-	- `car`
-	- `company_main`
-	- `custom`
-	- `grand_central`
-	- `home`
-	- `home_fax`
-	- `isdn`
-	- `main`
-	- `mobile`
-	- `other`
-	- `other_fax`
-	- `pager`
-	- `radio`
-	- `telex`
-	- `tty_tdd`
-	- `work`
-	- `work_fax`
-	- `work_mobile`
-	- `work_pager`
+- `type` (String) The type of phone number. Acceptable values: `assistant`, `callback`, `car`, `company_main` , `custom`, `grand_central`, `home`, `home_fax`, `isdn`, `main`, `mobile`, `other`, `other_fax`, `pager`, `radio`, `telex`, `tty_tdd`, `work`, `work_fax`, `work_mobile`, `work_pager`.
 - `value` (String) A human-readable phone number. It may be in any telephone number format.
 
 Optional:
@@ -397,10 +373,7 @@ Optional:
 - `gecos` (String) The GECOS (user information) for this account.
 - `gid` (String) The default group ID.
 - `home_directory` (String) The path to the home directory for this account.
-- `operating_system_type` (String) The operating system type for this account. Acceptable values: 
-	- `linux`
-	- `unspecified`
-	- `windows`
+- `operating_system_type` (String) The operating system type for this account. Acceptable values: `linux`, `unspecified`, `windows`.
 - `primary` (Boolean) If this is user's primary account within the SystemId.
 - `shell` (String) The path to the login shell for this account.
 - `system_id` (String) System identifier for which account Username or Uid apply to.
@@ -413,25 +386,7 @@ Optional:
 
 Required:
 
-- `type` (String) The type of relation. Acceptable values: 
-	- `admin_assistant`
-	- `assistant`
-	- `brother`
-	- `child`
-	- `custom`
-	- `domestic_partner`
-	- `dotted_line_manager`
-	- `exec_assistant`
-	- `father`
-	- `friend`
-	- `manager`
-	- `mother`
-	- `parent`
-	- `partner`
-	- `referred_by`
-	- `relative`
-	- `sister`
-	- `spouse`
+- `type` (String) The type of relation. Acceptable values: `admin_assistant`, `assistant`, `brother`, `child`, `custom`, `domestic_partner`, `dotted_line_manager`, `exec_assistant`, `father`, `friend`, `manager`, `mother`, `parent`, `partner`, `referred_by`, `relative`, `sister`, `spouse`.
 - `value` (String) The name of the person the user is related to.
 
 Optional:
@@ -461,6 +416,7 @@ Read-Only:
 Optional:
 
 - `create` (String)
+- `delete` (String)
 - `update` (String)
 
 
@@ -469,18 +425,7 @@ Optional:
 
 Required:
 
-- `type` (String) The type or purpose of the website. For example, a website could be labeled as home or blog. Alternatively, an entry can have a custom type Custom types must have a customType value. Acceptable values: 
-	- `app_install_page`
-	- `blog`
-	- `custom`
-	- `ftp`
-	- `home`
-	- `home_page`
-	- `other`
-	- `profile`
-	- `reservations`
-	- `resume`
-	- `work`
+- `type` (String) The type or purpose of the website. For example, a website could be labeled as home or blog. Alternatively, an entry can have a custom type Custom types must have a customType value. Acceptable values: `app_install_page`, `blog`, `custom`, `ftp` , `home`, `home_page`, `other`, `profile`, `reservations`, `resume`, `work`.
 - `value` (String) The URL of the website.
 
 Optional:
@@ -493,9 +438,8 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 terraform import googleworkspace_user.dwight 123456789012345678901
-# or with email as id
-terraform import googleworkspace_user.dwight dwight.schrute@example.com
 ```
-
-

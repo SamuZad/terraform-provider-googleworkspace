@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
+	datatransfer "google.golang.org/api/admin/datatransfer/v1"
 	directory "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/chromepolicy/v1"
 	"google.golang.org/api/gmail/v1"
@@ -284,4 +285,40 @@ func GetUserAliasService(usersService *directory.UsersService) (*directory.Users
 	}
 
 	return aliasesService, diags
+}
+
+func GetTransfersService(dataTransferService *datatransfer.Service) (*datatransfer.TransfersService, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	log.Printf("[INFO] Instantiating Data Transfer service before user deletion")
+
+	transfersService := dataTransferService.Transfers
+	if transfersService == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Data Transfer service before user deletion could not be created.",
+		})
+
+		return nil, diags
+	}
+
+	return transfersService, diags
+}
+
+func GetTransferApplicationsService(dataTransferService *datatransfer.Service) (*datatransfer.ApplicationsService, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	log.Printf("[INFO] Instantiating Data Transfer Applications service before user deletion")
+
+	applicationsService := dataTransferService.Applications
+	if applicationsService == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Data Transfer Applications service before user deletion could not be created.",
+		})
+
+		return nil, diags
+	}
+
+	return applicationsService, diags
 }

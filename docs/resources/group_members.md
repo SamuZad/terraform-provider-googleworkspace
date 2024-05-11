@@ -13,6 +13,9 @@ Group Members resource manages Google Workspace Groups Members. Group Members re
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "googleworkspace_group" "sales" {
   email = "sales@example.com"
 }
@@ -104,5 +107,8 @@ Read-Only:
 Import is supported using the following syntax:
 
 ```shell
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 terraform import googleworkspace_group_members.sales groups/01abcde23fg4h5i
 ```

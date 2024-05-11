@@ -13,6 +13,9 @@ Group Settings resource manages Google Workspace Groups Setting. Group Settings 
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "googleworkspace_group" "sales" {
   email = "sales@example.com"
 }
@@ -144,5 +147,8 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 terraform import googleworkspace_group_settings.sales-settings sales@example.com
 ```

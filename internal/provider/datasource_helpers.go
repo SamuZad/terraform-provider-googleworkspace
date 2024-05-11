@@ -82,3 +82,12 @@ func addExactlyOneOfFieldsToSchema(schema map[string]*schema.Schema, keys ...str
 		schema[v].ExactlyOneOf = keys
 	}
 }
+
+// removeFieldsFromSchema is a convenience func that removes a list of keys from the schema.
+// This is useful when the schema has been generated (using `datasourceSchemaFromResourceSchema` above for
+// example) and the datasource should not have certain fields, as they are not computed/stored by the Google API.
+func removeFieldsFromSchema(schema map[string]*schema.Schema, keys ...string) {
+	for _, v := range keys {
+		delete(schema, v)
+	}
+}

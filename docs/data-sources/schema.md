@@ -13,6 +13,9 @@ Schema data source in the Terraform Googleworkspace provider. Schema resides und
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_schema" "birthday" {
   schema_name = "birthday"
 }
@@ -59,5 +62,3 @@ Read-Only:
 
 - `max_value` (Number)
 - `min_value` (Number)
-
-

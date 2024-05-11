@@ -13,6 +13,9 @@ OrgUnit resource manages Google Workspace OrgUnits. Org Unit resides under the `
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "googleworkspace_org_unit" "org" {
   name                 = "dunder-mifflin"
   description          = "paper company"
@@ -46,5 +49,8 @@ resource "googleworkspace_org_unit" "org" {
 Import is supported using the following syntax:
 
 ```shell
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 terraform import googleworkspace_org_unit.org "id:01ab2c3d4efg56h"
 ```

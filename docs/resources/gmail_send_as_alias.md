@@ -13,6 +13,9 @@ Gmail Send As Alias resource in the Terraform Googleworkspace provider. Please e
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_user" "example" {
   primary_email = "user.with.gmail.license@example.com"
 }
@@ -76,5 +79,8 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 terraform import googleworkspace_gmail_send_as_alias.alias user@example.com:alias@anotherexample.com
 ```
