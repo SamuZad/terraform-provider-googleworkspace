@@ -1170,8 +1170,12 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		newUser, retryErr := usersService.Get(d.Id()).IfNoneMatch(cc.lastEtag).Do()
 		if googleapi.IsNotModified(retryErr) {
 			cc.currConsistent += 1
-		} else if isNotFound(retryErr) {
-			// user was not found yet therefore setting currConsistent back to null value
+		} else if isNotFound(retryErr) || isForbidden(retryErr) {
+			// user was not found yet therefore setting currConsistent back to null value.
+			// Since the insert is eventually consistent, Google's API may return 403
+			// Forbidden right after creation, before the changes have time to propagate,
+			// This should not be able to mask an actual authorization error as the insert
+			// has already successfully completed.
 			cc.currConsistent = 0
 		} else if retryErr != nil {
 			return fmt.Errorf("unexpected error during retries of %s: %s", cc.resourceType, retryErr)
