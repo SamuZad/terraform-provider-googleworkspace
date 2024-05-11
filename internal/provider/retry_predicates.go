@@ -126,11 +126,6 @@ func isRateLimitExceeded(err error) (bool, string) {
 		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
 	}
 
-	if gerr.Code == 403 {
-		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
-		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
-	}
-
 	return false, ""
 }
 
