@@ -13,6 +13,9 @@ Privileges data source in the Terraform Googleworkspace provider. Privileges res
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_privileges" "privileges" {}
 
 # filter using native Terraform syntax
@@ -63,5 +66,3 @@ Read-Only:
 - `privilege_name` (String)
 - `service_id` (String)
 - `service_name` (String)
-
-

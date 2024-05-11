@@ -13,6 +13,9 @@ Group data source in the Terraform Googleworkspace provider. Group resides under
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_group" "sales" {
   email = "sales@example.com"
 }
@@ -39,5 +42,3 @@ output "group_name" {
 - `etag` (String) ETag of the resource.
 - `name` (String) The group's display name.
 - `non_editable_aliases` (List of String) asps.list of the group's non-editable alias email addresses that are outside of the account's primary domain or subdomains. These are functioning email addresses used by the group.
-
-

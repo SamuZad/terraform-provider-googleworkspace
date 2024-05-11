@@ -13,6 +13,9 @@ Chrome Policy resource in the Terraform Googleworkspace provider. Currently only
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "googleworkspace_org_unit" "example" {
   name                 = "example"
   parent_org_unit_path = "/"
@@ -48,5 +51,3 @@ Required:
 
 - `schema_name` (String) The full qualified name of the policy schema.
 - `schema_values` (Map of String) JSON encoded map that represents key/value pairs that correspond to the given schema.
-
-

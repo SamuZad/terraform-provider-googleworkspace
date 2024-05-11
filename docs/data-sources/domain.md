@@ -13,6 +13,9 @@ Domain data source in the Terraform Googleworkspace provider. Domain resides und
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_domain" "example" {
   domain_name = "example.com"
 }
@@ -37,5 +40,3 @@ output "domain_verified" {
 - `id` (String) The ID of this resource.
 - `is_primary` (Boolean) Indicates if the domain is a primary domain.
 - `verified` (Boolean) Indicates the verification state of a domain.
-
-

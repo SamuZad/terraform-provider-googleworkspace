@@ -13,6 +13,9 @@ Org Unit data source in the Terraform Googleworkspace provider. Org Unit resides
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_org_unit" "org" {
   org_unit_id = "id:01ab2c3d4efg56h"
 }
@@ -35,5 +38,3 @@ data "googleworkspace_org_unit" "org" {
 - `name` (String) The organizational unit's path name. For example, an organizational unit's name within the /corp/support/sales_support parent path is sales_support.
 - `parent_org_unit_id` (String) The unique ID of the parent organizational unit.
 - `parent_org_unit_path` (String) The organizational unit's parent path. For example, /corp/sales is the parent path for /corp/sales/sales_support organizational unit.
-
-

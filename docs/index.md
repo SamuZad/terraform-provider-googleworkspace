@@ -13,6 +13,9 @@ The Google Workspace provider provides resources to interact with Google Workspa
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 # Auth method: Domain-wide delegation and user impersonation
 provider "googleworkspace" {
   credentials             = "/Users/mscott/my-project-c633d7053aab.json"
@@ -27,6 +30,9 @@ provider "googleworkspace" {
 ```
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 # Auth method: Admin roles applied directly to a service account
 provider "googleworkspace" {
   credentials = "/Users/mscott/my-project-c633d7053aab.json"
@@ -89,7 +95,7 @@ You do not need to set up domain-wide delegation if you are granting more specif
 
 To do this it's recommended that you create a custom admin role(s) with the Admin API privileges you need, as [pre-built administrator roles](https://support.google.com/a/answer/2405986) might not cover your use case.
 
-~> Some resources controlled via this provider can only be managed by a Super Admin, so user impersonation is necessary in those cases. For instance, [Admin Roles can only be managed via the console or API by a Super Admin](https://support.google.com/a/answer/2406043?hl=en). Also, access to some API endpoints may not be possible to grant as privileges in custom roles. 
+~> Some resources controlled via this provider can only be managed by a Super Admin, so user impersonation is necessary in those cases. For instance, [Admin Roles can only managed via the console or API by a Super Admin](https://support.google.com/a/answer/2406043?hl=en). Also, access to some API endpoints may not be possible to grant as privileges in custom roles. 
 
 When using gcloud locally, you can provide the required scopes for ADC login by adding the `--scopes` parameter to [`gcloud auth application-default login`](https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login). For example, you can [provide additional scopes](https://cloud.google.com/sdk/gcloud/reference/beta/compute/instances/set-scopes) on Compute Engine. You can do this to configure access for both service accounts and end users.
 

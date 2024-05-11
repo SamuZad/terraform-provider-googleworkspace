@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	googleoauth "golang.org/x/oauth2/google"
 
+	datatransfer "google.golang.org/api/admin/datatransfer/v1"
 	directory "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/chromepolicy/v1"
 	"google.golang.org/api/gmail/v1"
@@ -189,6 +190,7 @@ func (c *apiClient) NewDirectoryService() (*directory.Service, diag.Diagnostics)
 
 	return directoryService, diags
 }
+
 func (c *apiClient) NewGmailService(ctx context.Context, userId string) (*gmail.Service, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -246,4 +248,26 @@ func (c *apiClient) NewGroupsSettingsService() (*groupssettings.Service, diag.Di
 	}
 
 	return groupsSettingsService, diags
+}
+
+func (c *apiClient) NewDataTransferService() (*datatransfer.Service, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	log.Printf("[INFO] Instantiating Google Admin Datatransfer service")
+
+	dataTransferService, err := datatransfer.NewService(context.Background(), option.WithHTTPClient(c.client))
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	if dataTransferService == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Datatransfer Service could not be created.",
+		})
+
+		return nil, diags
+	}
+
+	return dataTransferService, diags
 }

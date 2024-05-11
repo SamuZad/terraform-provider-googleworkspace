@@ -13,6 +13,9 @@ Users data source in the Terraform Googleworkspace provider. Users resides under
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_users" "my-domain-users" {}
 
 output "num_users" {
@@ -260,5 +263,3 @@ Read-Only:
 - `primary` (Boolean)
 - `type` (String)
 - `value` (String)
-
-

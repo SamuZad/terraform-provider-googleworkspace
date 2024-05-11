@@ -13,6 +13,9 @@ Role data source in the Terraform Googleworkspace provider. Role resides under t
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_role" "group-admin" {
   name = "_GROUPS_ADMIN_ROLE"
 }
@@ -45,5 +48,3 @@ Read-Only:
 
 - `privilege_name` (String)
 - `service_id` (String)
-
-

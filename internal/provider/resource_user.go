@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
+	datatransfer "google.golang.org/api/admin/datatransfer/v1"
 	directory "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 )
@@ -117,7 +118,9 @@ func resourceUser() *schema.Resource {
 	return &schema.Resource{
 		// This description is used by the documentation generator and the language server.
 		Description: "User resource manages Google Workspace Users. User resides " +
-			"under the `https://www.googleapis.com/auth/admin.directory.user` client scope.",
+			"under the `https://www.googleapis.com/auth/admin.directory.user` client scope.\n" +
+			"Additionally, the `on_delete_data_transfer` block requires" +
+			" the `https://www.googleapis.com/auth/admin.datatransfer` client scope.",
 
 		CreateContext: resourceUserCreate,
 		ReadContext:   resourceUserRead,
@@ -127,6 +130,7 @@ func resourceUser() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(5 * time.Minute),
 			Update: schema.DefaultTimeout(5 * time.Minute),
+			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 
 		Importer: &schema.ResourceImporter{
@@ -144,6 +148,7 @@ func resourceUser() *schema.Resource {
 					"of another user.",
 				Type:     schema.TypeString,
 				Required: true,
+				// TODO write a custom validation function to validate email
 			},
 			"password": {
 				Description: "Stores the password for the user account. A password can contain any combination of " +
@@ -879,6 +884,70 @@ func resourceUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"on_delete_data_transfer": {
+				Description: "Holds the information about data transfer prior to deletion of the user's account. " +
+					"The recipient and what gets transferred is customizable",
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"new_data_owner_email": {
+							Description: "The email of the recipient of the transferred data.",
+							Type:        schema.TypeString,
+							Required:    true,
+							// TODO write a custom validation function to validate email
+						},
+						"calendar_transfer": {
+							Description: "Indicates if the user's calendar data is transferred.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+						},
+						"calendar_release_resources": {
+							Description: "Indicates if the user's calendar resources are released.",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Default:     "FALSE",
+							ValidateDiagFunc: validation.ToDiagFunc(
+								validation.StringInSlice([]string{"TRUE", "FALSE"}, false),
+							),
+						},
+						"drive_and_docs_transfer": {
+							Description: "Indicates if the user's Drive and Docs data is transferred.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+						},
+						"drive_and_docs_privacy_level": {
+							Description: "The privacy level of the transferred Drive and Docs data. " +
+								"Acceptable values: `PRIVATE`, `SHARED`.",
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "SHARED",
+							ValidateDiagFunc: validation.ToDiagFunc(
+								validation.StringInSlice([]string{"PRIVATE", "SHARED"}, false),
+							),
+						},
+						"looker_studio_transfer": {
+							Description: "Indicates if the user's Looker Studio data is transferred.",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+						},
+						"looker_studio_privacy_level": {
+							Description: "The privacy level of the transferred Looker Studio data. " +
+								"Acceptable values: `PRIVATE`, `SHARED`.",
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "SHARED",
+							ValidateDiagFunc: validation.ToDiagFunc(
+								validation.StringInSlice([]string{"PRIVATE", "SHARED"}, false),
+							),
+						},
+					},
+				},
+			},
 			// "gender" is not included in the GET response, currently, so leaving this out for now
 			"thumbnail_photo_etag": {
 				Description: "ETag of the user's photo",
@@ -1082,6 +1151,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	d.SetId(user.Id)
+	d.Set("on_delete_data_transfer", d.Get("on_delete_data_transfer"))
 
 	// INSERT will respond with the User that will be created, however, it is eventually consistent
 	// After INSERT, the etag is updated along with the User (and any aliases),
@@ -1203,6 +1273,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	d.Set("locations", flattenInterfaceObjects(user.Locations))
 	d.Set("include_in_global_address_list", user.IncludeInGlobalAddressList)
 	d.Set("keywords", flattenInterfaceObjects(user.Keywords))
+	d.Set("on_delete_data_transfer", d.Get("on_delete_data_transfer"))
 	d.Set("deletion_time", user.DeletionTime)
 	d.Set("thumbnail_photo_etag", user.ThumbnailPhotoEtag)
 	d.Set("ims", flattenInterfaceObjects(user.Ims))
@@ -1247,14 +1318,14 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	if d.HasChange("primary_email") {
 		if d.IsNewResource() == false {
 			emailupdate := directory.User{
-				PrimaryEmail:               primaryEmail,
+				PrimaryEmail: primaryEmail,
 			}
 			_, err := usersService.Update(d.Id(), &emailupdate).Do()
 			if err != nil {
 				return diag.FromErr(err)
 			}
 		}
-		
+
 		userObj.PrimaryEmail = primaryEmail
 	}
 
@@ -1452,6 +1523,10 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		}
 	}
 
+	if d.HasChange("on_delete_data_transfer") {
+		d.Set("on_delete_data_transfer", d.Get("on_delete_data_transfer"))
+	}
+
 	if d.HasChange("is_admin") {
 		makeAdminObj := directory.UserMakeAdmin{
 			Status:          d.Get("is_admin").(bool),
@@ -1502,7 +1577,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	if d.HasChange("primary_email") && d.IsNewResource() == false {
 		old, _ := d.GetChange("primary_email")
 		oldPrimary := old.(string)
-	
+
 		// Remove old primary pleeeeease
 
 		aliasesService, diags := GetUserAliasService(usersService)
@@ -1542,6 +1617,137 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	usersService, diags := GetUsersService(directoryService)
 	if diags.HasError() {
 		return diags
+	}
+
+	if len(d.Get("on_delete_data_transfer").([]interface{})) > 0 {
+		transferInfo := expandInterfaceObjects(d.Get("on_delete_data_transfer"))
+
+		newDataOwnerEmail := transferInfo[0].(map[string]interface{})["newDataOwnerEmail"].(string)
+		driveAndDocsTransfer := transferInfo[0].(map[string]interface{})["driveAndDocsTransfer"].(bool)
+		driveAndDocsPrivacyLevel := transferInfo[0].(map[string]interface{})["driveAndDocsPrivacyLevel"].(string)
+		calendarTransfer := transferInfo[0].(map[string]interface{})["calendarTransfer"].(bool)
+		calendarReleaseResources := transferInfo[0].(map[string]interface{})["calendarReleaseResources"].(string)
+		lookerStudioTransfer := transferInfo[0].(map[string]interface{})["lookerStudioTransfer"].(bool)
+		lookerStudioPrivacyLevel := transferInfo[0].(map[string]interface{})["lookerStudioPrivacyLevel"].(string)
+
+		if newDataOwnerEmail != "" {
+			NewOwner, userGetErr := usersService.Get(newDataOwnerEmail).Do()
+			if userGetErr != nil {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("Error retrieving recipient for deletion data transfer: %s. Caused by: %s", newDataOwnerEmail, userGetErr.Error()),
+				})
+				return diags
+			}
+			log.Printf("[INFO] New Owner ID: %q", NewOwner.Id)
+
+			transfersService, diags := client.NewDataTransferService()
+			if diags.HasError() {
+				return diags
+			}
+
+			transferApplicationsService, diags := GetTransferApplicationsService(transfersService)
+			if diags.HasError() {
+				return diags
+			}
+
+			transferApplications, transferApplicationsErr := transferApplicationsService.List().Do()
+			if transferApplicationsErr != nil {
+				return diag.FromErr(transferApplicationsErr)
+			}
+
+			transferObject := &datatransfer.DataTransfer{
+				NewOwnerUserId:           NewOwner.Id,
+				OldOwnerUserId:           d.Id(),
+				ApplicationDataTransfers: []*datatransfer.ApplicationDataTransfer{},
+			}
+
+			for _, transferApplication := range transferApplications.Applications {
+				if driveAndDocsTransfer && transferApplication.Name == "Drive and Docsaaaaa" {
+					transferObject.ApplicationDataTransfers = append(transferObject.ApplicationDataTransfers, &datatransfer.ApplicationDataTransfer{
+						ApplicationId: transferApplication.Id,
+						ApplicationTransferParams: []*datatransfer.ApplicationTransferParam{
+							{
+								Key:   "PRIVACY_LEVEL",
+								Value: []string{driveAndDocsPrivacyLevel},
+							},
+						},
+					})
+				}
+
+				if calendarTransfer && transferApplication.Name == "Calendar" {
+					transferObject.ApplicationDataTransfers = append(transferObject.ApplicationDataTransfers, &datatransfer.ApplicationDataTransfer{
+						ApplicationId: transferApplication.Id,
+						ApplicationTransferParams: []*datatransfer.ApplicationTransferParam{
+							{
+								Key:   "RELEASE_RESOURCES",
+								Value: []string{calendarReleaseResources},
+							},
+						},
+					})
+				}
+
+				if lookerStudioTransfer && transferApplication.Name == "Looker Studio" {
+					transferObject.ApplicationDataTransfers = append(transferObject.ApplicationDataTransfers, &datatransfer.ApplicationDataTransfer{
+						ApplicationId: transferApplication.Id,
+						ApplicationTransferParams: []*datatransfer.ApplicationTransferParam{
+							{
+								Key:   "PRIVACY_LEVEL",
+								Value: []string{lookerStudioPrivacyLevel},
+							},
+						},
+					})
+				}
+			}
+
+			transfers, diags := GetTransfersService(transfersService)
+			if diags.HasError() {
+				return diags
+			}
+
+			preDeleteTransfer, preDeleteTransferErr := transfers.Insert(transferObject).Do()
+			if preDeleteTransferErr != nil {
+				return diag.FromErr(preDeleteTransferErr)
+			}
+
+			cc := consistencyCheck{
+				resourceType: "user",
+				timeout:      d.Timeout(schema.TimeoutDelete),
+			}
+
+			transferValidate := retryTimeDuration(ctx, d.Timeout(schema.TimeoutDelete), func() error {
+				var retryErr error
+
+				if cc.reachedConsistency(1) {
+					return nil
+				}
+
+				transferStatus, retryErr := transfers.Get(preDeleteTransfer.Id).IfNoneMatch(cc.lastEtag).Do()
+
+				if googleapi.IsNotModified(retryErr) {
+					cc.currConsistent += 1
+				} else if isNotFound(retryErr) {
+					// user was not found yet therefore setting currConsistent back to null value
+					cc.currConsistent = 0
+				} else if retryErr != nil {
+					return fmt.Errorf("unexpected error during retries of %s: %s", cc.resourceType, retryErr)
+				} else {
+					cc.handleNewEtag(transferStatus.Etag)
+				}
+				// Ensure that only completed jobs are considered consistent
+				if transferStatus != nil {
+					if transferStatus.OverallTransferStatusCode != "completed" {
+						cc.currConsistent = 0
+					}
+					log.Printf("[INFO] Deletion data transfer status is: %q", transferStatus.OverallTransferStatusCode)
+				}
+
+				return fmt.Errorf("timed out while waiting for %s to be inserted", transferStatus)
+			})
+			if transferValidate != nil {
+				return diag.FromErr(transferValidate)
+			}
+		}
 	}
 
 	err := usersService.Delete(d.Id()).Do()

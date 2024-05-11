@@ -13,6 +13,9 @@ Chrome Policy Schema data source in the Terraform Googleworkspace provider. Chro
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_chrome_policy_schema" "example" {
   schema_name = "chrome.printers.AllowForUsers"
 }
@@ -88,5 +91,3 @@ Read-Only:
 - `field` (String)
 - `notice_message` (String)
 - `notice_value` (String)
-
-

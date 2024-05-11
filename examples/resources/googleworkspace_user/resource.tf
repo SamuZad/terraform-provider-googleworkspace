@@ -89,5 +89,18 @@ resource "googleworkspace_user" "dwight" {
     }
   }
 
+  on_delete_data_transfer {
+    new_data_owner_email = "mike.mikeson@example.com"
+
+    calendar_transfer          = true
+    calendar_release_resources = "TRUE"
+
+    drive_and_docs_transfer      = true
+    drive_and_docs_privacy_level = "PRIVATE"
+
+    looker_studio_transfer      = true
+    looker_studio_privacy_level = "PRIVATE"
+  }
+
   recovery_email = "dwightkschrute@example.com"
 }

@@ -13,6 +13,9 @@ Domain resource manages Google Workspace Domains. Domain resides under the `http
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "googleworkspace_domain" "example" {
   domain_name = "example.com"
 }
@@ -39,5 +42,8 @@ resource "googleworkspace_domain" "example" {
 Import is supported using the following syntax:
 
 ```shell
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 terraform import googleworkspace_domain.example example.com
 ```

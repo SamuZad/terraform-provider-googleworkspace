@@ -13,6 +13,9 @@ Group Settings data source in the Terraform Googleworkspace provider. Group Sett
 ## Example Usage
 
 ```terraform
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "googleworkspace_group_settings" "sales-settings" {
   email = "sales@example.com"
 }
@@ -120,5 +123,3 @@ output "who_can_join_sales" {
 	- `ALL_MEMBERS_CAN_VIEW`: The group members can view the group members list. 
 	- `ALL_MANAGERS_CAN_VIEW`: The group managers can view group members list. 
 	- `ALL_OWNERS_CAN_VIEW`: The group owners can view group members list.
-
-
