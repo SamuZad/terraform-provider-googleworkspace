@@ -57,7 +57,7 @@ resource "googleworkspace_group_settings" "sales-settings" {
 	- `MODERATE_NEW_MEMBERS`: All messages from new members are sent to the group owner's email address for approval. If approved, the message is sent to the group. 
 	- `MODERATE_NONE`: No moderator approval is required. Messages are delivered directly to the group.
 	Note: When the `who_can_post_message` is set to `ANYONE_CAN_POST`, we recommend the `message_moderation_level` be set to `MODERATE_NON_MEMBERS` to protect the group from possible spam.When `member_can_post_as_the_group` is true, any message moderation settings on individual users or new members will not apply to posts made on behalf of the group.
-- `primary_language` (String) The primary language for group. For a group's primary language use the language tags from the Google Workspace languages found at Google Workspace Email Settings API Email Language Tags.
+- `primary_language` (String) Defaults to `en_US`. The primary language for group. For a group's primary language use the language tags from the Google Workspace languages found at Google Workspace Email Settings API Email Language Tags.
 - `reply_to` (String) Defaults to `REPLY_TO_IGNORE`. Specifies who receives the default reply. Possible values are: 
 	- `REPLY_TO_CUSTOM`: For replies to messages, use the group's custom email address. When set to `REPLY_TO_CUSTOM`, the `custom_reply_to` property holds the custom email address used when replying to a message, the customReplyTo property must have a value. Otherwise an error is returned. 
 	- `REPLY_TO_SENDER`: The reply sent to author of message. 
