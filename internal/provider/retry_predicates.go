@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"google.golang.org/api/googleapi"
 )
@@ -93,6 +94,17 @@ func isCommonRetryableErrorCode(err error) (bool, string) {
 		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
 		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
 	}
+
+	// Unfortunately, the Google API sometimes returns 403 - Not Authorized to access this resource/api after a create operation
+	// even though the resource was created successfully. Becasue of this, we should retry on 403 errors as well
+	// This will lead to slower error responses when there is an actual problem, but it is better than failing the operation
+	// when the resource was created successfully. Some of the actual problems include:
+	// - trying to modify certain fields on an admin user without domain-wide delegation
+	// - trying to undertake operations without the correct permissions
+	if gerr.Code == 403 && strings.Contains(gerr.Body, "Not Authorized to access this resource/api") {
+		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
+		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
+	}
 	return false, ""
 }
 
@@ -103,12 +115,14 @@ func isRateLimitExceeded(err error) (bool, string) {
 	}
 
 	if gerr.Code == 429 {
-		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
+		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s, delaying retry by 10 seconds", err)
+		time.Sleep(10 * time.Second)
 		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
 	}
 
-	if gerr.Code == 403 && strings.Contains(gerr.Error(), "quotaExceeded") {
-		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
+	if gerr.Code == 403 && (strings.Contains(gerr.Error(), "Quota exceeded") || strings.Contains(gerr.Error(), "quotaExceeded")) {
+		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s, , delaying retry by 10 seconds", err)
+		time.Sleep(10 * time.Second)
 		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
 	}
 
