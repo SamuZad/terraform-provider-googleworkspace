@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"google.golang.org/api/googleapi"
 )
@@ -115,14 +114,12 @@ func isRateLimitExceeded(err error) (bool, string) {
 	}
 
 	if gerr.Code == 429 {
-		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s, delaying retry by 10 seconds", err)
-		time.Sleep(10 * time.Second)
+		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
 		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
 	}
 
 	if gerr.Code == 403 && (strings.Contains(gerr.Error(), "Quota exceeded") || strings.Contains(gerr.Error(), "quotaExceeded")) {
-		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s, , delaying retry by 10 seconds", err)
-		time.Sleep(10 * time.Second)
+		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
 		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
 	}
 
