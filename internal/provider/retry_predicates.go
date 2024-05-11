@@ -129,15 +129,3 @@ func isNotFound(err error) bool {
 	ae, ok := err.(*googleapi.Error)
 	return ok && ae.Code == http.StatusNotFound
 }
-
-// IsForbidden reports whether err is the result of the
-// server replying with http.StatusForbidden.
-// Such error values are - confusingly - sometimes returned by "Do" methods
-// on calls when creation of ressource was too recent to return values
-func isForbidden(err error) bool {
-	if err == nil {
-		return false
-	}
-	ae, ok := err.(*googleapi.Error)
-	return ok && ae.Code == http.StatusForbidden
-}
