@@ -1674,7 +1674,7 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interf
 			}
 
 			for _, transferApplication := range transferApplications.Applications {
-				if driveAndDocsTransfer && transferApplication.Name == "Drive and Docsaaaaa" {
+				if driveAndDocsTransfer && transferApplication.Name == "Drive and Docs" {
 					transferObject.ApplicationDataTransfers = append(transferObject.ApplicationDataTransfers, &datatransfer.ApplicationDataTransfer{
 						ApplicationId: transferApplication.Id,
 						ApplicationTransferParams: []*datatransfer.ApplicationTransferParam{
