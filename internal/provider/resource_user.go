@@ -49,16 +49,29 @@ func diffSuppressEmails(k, old, new string, d *schema.ResourceData) bool {
 }
 
 func diffSuppressAliases(k, old, new string, d *schema.ResourceData) bool {
-	// The configAliases list returns an incorrect value if "aliases" is removed, rather than set to []
-	stateAliases, configAliases := d.GetChange("aliases")
+    // Get the old and new aliases (stateAliases and configAliases)
+    stateAliases, configAliases := d.GetChange("aliases")
 
-	stateList := listOfInterfacestoStrings(stateAliases.([]interface{}))
-	configList := listOfInterfacestoStrings(configAliases.([]interface{}))
+    // Convert to string lists
+    stateList := listOfInterfacestoStrings(stateAliases.([]interface{}))
+    configList := listOfInterfacestoStrings(configAliases.([]interface{}))
+    
+    // Sort both lists to ignore order differences
+    sort.Strings(stateList)
+    sort.Strings(configList)
 
-	sort.Strings(stateList)
-	sort.Strings(configList)
+    // If both sorted lists are identical, suppress the diff (return true)
+    if len(stateList) == len(configList) {
+        for i := range stateList {
+            if stateList[i] != configList[i] {
+                return false // Lists differ in content
+            }
+        }
+        return true // Lists are identical, only reordered
+    }
 
-	return stringInSlice(stateList, new)
+    // Lists differ in length, so return false (indicating a change)
+    return false
 }
 
 func diffSuppressCustomSchemas(_, _, _ string, d *schema.ResourceData) bool {
