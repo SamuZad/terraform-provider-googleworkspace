@@ -10,7 +10,7 @@ import (
 func dataSourceDynamicGroup() *schema.Resource {
 	// Generate datasource schema from resource
 	dsSchema := datasourceSchemaFromResourceSchema(resourceDynamicGroup().Schema)
-  addExactlyOneOfFieldsToSchema(dsSchema, "id")
+	addExactlyOneOfFieldsToSchema(dsSchema, "id")
 
 	return &schema.Resource{
 		// This description is used by the documentation generator and the language server.
