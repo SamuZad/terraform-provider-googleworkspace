@@ -3,6 +3,7 @@ package googleworkspace
 import (
 	"context"
 	"encoding/json"
+  "fmt"
 	"log"
 	"strings"
 	"time"
@@ -46,6 +47,7 @@ func resourceDynamicGroup() *schema.Resource {
 		Description: "Dynamic Group resource manages Google Workspace Groups with Dynamic memberships. Dynamic Group resides under the " +
 			"`https://www.googleapis.com/auth/cloud-identity.groups` client scope.",
 
+    CustomizeDiff: resourceExampleCustomizeDiff,
 		CreateContext: resourceDynamicGroupCreate,
 		ReadContext:   resourceDynamicGroupRead,
 		UpdateContext: resourceDynamicGroupUpdate,
@@ -205,6 +207,23 @@ func resourceDynamicGroupUpdate(ctx context.Context, d *schema.ResourceData, met
 		return diags
 	}
 
+  if d.HasChange("email") && d.HasChangesExcept("email") {
+    diags = append(diags, diag.Diagnostic{
+      Severity: diag.Error,
+      Summary: "If you change the email address of a group, you must only change the email address.",
+    })
+    return diags
+
+  }
+
+  if d.HasChange("query") && d.HasChangesExcept("query") {
+    diags = append(diags, diag.Diagnostic{
+      Severity: diag.Error,
+      Summary: "If you change the query of a group, you must only change the query.",
+    })
+    return diags
+  }
+
 	groupObj := cloudidentity.Group{}
 
 	var updateMask []string
@@ -298,4 +317,18 @@ func resourceDynamicGroupDelete(ctx context.Context, d *schema.ResourceData, met
 	log.Printf("[DEBUG] Finished deleting Dynamic Group %q: %#v", d.Id(), email)
 
 	return diags
+}
+
+// I'm leaving this here but it does not work. UpdatedKeys() returns an empty
+// list for some reason. Need to debug this later.
+func resourceExampleCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+  mustBeChangedInIsolation := []string{"email", "query"}
+
+  for _, attr := range mustBeChangedInIsolation {
+    if diff.HasChange(attr) && len(diff.UpdatedKeys()) > 1 {
+      return fmt.Errorf("If you change the %q of a group, you must only change the %q.", attr, attr)
+    }
+  }
+
+  return nil
 }
