@@ -10,7 +10,7 @@ import (
 func dataSourceDynamicGroup() *schema.Resource {
 	// Generate datasource schema from resource
 	dsSchema := datasourceSchemaFromResourceSchema(resourceDynamicGroup().Schema)
-	addExactlyOneOfFieldsToSchema(dsSchema, "id")
+	addExactlyOneOfFieldsToSchema(dsSchema, "id", "email")
 
 	return &schema.Resource{
 		// This description is used by the documentation generator and the language server.
@@ -42,7 +42,14 @@ func dataSourceDynamicGroupRead(ctx context.Context, d *schema.ResourceData, met
 			return diags
 		}
 
-		group, err := groupsService.Get(d.Get("id").(string)).Do()
+		lookupGroupResponse, err := groupsService.Lookup().GroupKeyId(d.Get("email").(string)).Do()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		groupName := lookupGroupResponse.Name
+
+		group, err := groupsService.Get(groupName).Do()
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -50,7 +57,7 @@ func dataSourceDynamicGroupRead(ctx context.Context, d *schema.ResourceData, met
 		if group == nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("No dynamic group was returned for %s.", d.Get("id").(string)),
+				Summary:  fmt.Sprintf("No dynamic group was returned for %s.", d.Get("email").(string)),
 			})
 
 			return diags
