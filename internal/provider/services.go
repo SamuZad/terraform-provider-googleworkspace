@@ -11,6 +11,7 @@ import (
 	datatransfer "google.golang.org/api/admin/datatransfer/v1"
 	directory "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/chromepolicy/v1"
+	"google.golang.org/api/cloudidentity/v1"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/groupssettings/v1"
 )
@@ -321,4 +322,21 @@ func GetTransferApplicationsService(dataTransferService *datatransfer.Service) (
 	}
 
 	return applicationsService, diags
+}
+
+func GetDynamicGroupsService(cloudIdentityService *cloudidentity.Service) (*cloudidentity.GroupsService, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	log.Printf("[INFO] Instantiating Cloud Identity Groups service")
+	groupsService := cloudIdentityService.Groups
+	if groupsService == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Cloud Identity Groups service could not be created.",
+		})
+
+		return nil, diags
+	}
+
+	return groupsService, diags
 }

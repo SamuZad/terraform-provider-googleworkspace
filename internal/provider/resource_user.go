@@ -49,29 +49,29 @@ func diffSuppressEmails(k, old, new string, d *schema.ResourceData) bool {
 }
 
 func diffSuppressAliases(k, old, new string, d *schema.ResourceData) bool {
-    // Get the old and new aliases (stateAliases and configAliases)
-    stateAliases, configAliases := d.GetChange("aliases")
+	// Get the old and new aliases (stateAliases and configAliases)
+	stateAliases, configAliases := d.GetChange("aliases")
 
-    // Convert to string lists
-    stateList := listOfInterfacestoStrings(stateAliases.([]interface{}))
-    configList := listOfInterfacestoStrings(configAliases.([]interface{}))
-    
-    // Sort both lists to ignore order differences
-    sort.Strings(stateList)
-    sort.Strings(configList)
+	// Convert to string lists
+	stateList := listOfInterfacestoStrings(stateAliases.([]interface{}))
+	configList := listOfInterfacestoStrings(configAliases.([]interface{}))
 
-    // If both sorted lists are identical, suppress the diff (return true)
-    if len(stateList) == len(configList) {
-        for i := range stateList {
-            if stateList[i] != configList[i] {
-                return false // Lists differ in content
-            }
-        }
-        return true // Lists are identical, only reordered
-    }
+	// Sort both lists to ignore order differences
+	sort.Strings(stateList)
+	sort.Strings(configList)
 
-    // Lists differ in length, so return false (indicating a change)
-    return false
+	// If both sorted lists are identical, suppress the diff (return true)
+	if len(stateList) == len(configList) {
+		for i := range stateList {
+			if stateList[i] != configList[i] {
+				return false // Lists differ in content
+			}
+		}
+		return true // Lists are identical, only reordered
+	}
+
+	// Lists differ in length, so return false (indicating a change)
+	return false
 }
 
 func diffSuppressCustomSchemas(_, _, _ string, d *schema.ResourceData) bool {
@@ -1766,7 +1766,7 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interf
 					log.Printf("[INFO] Deletion data transfer status is: %q", transferStatus.OverallTransferStatusCode)
 				}
 
-				return fmt.Errorf("timed out while waiting for %s to be inserted", transferStatus)
+				return fmt.Errorf("timed out while waiting for %v to be inserted", transferStatus)
 			})
 			if transferValidate != nil {
 				return diag.FromErr(transferValidate)

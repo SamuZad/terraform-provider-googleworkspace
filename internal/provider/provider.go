@@ -130,6 +130,7 @@ func New(version string) func() *schema.Provider {
 				"googleworkspace_schema":               dataSourceSchema(),
 				"googleworkspace_user":                 dataSourceUser(),
 				"googleworkspace_users":                dataSourceUsers(),
+				"googleworkspace_dynamic_group":        dataSourceDynamicGroup(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"googleworkspace_chrome_policy":       resourceChromePolicy(),
@@ -145,6 +146,7 @@ func New(version string) func() *schema.Provider {
 				"googleworkspace_role_assignment":     resourceRoleAssignment(),
 				"googleworkspace_schema":              resourceSchema(),
 				"googleworkspace_user":                resourceUser(),
+				"googleworkspace_dynamic_group":       resourceDynamicGroup(),
 			},
 		}
 
