@@ -51,6 +51,14 @@ func resourceRoleAssignment() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 			},
+			"assignee_type": {
+				Description:      "The type of the assignee (USER or GROUP).",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "USER",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"USER", "GROUP"}, true)),
+				ForceNew:         true,
+			},
 			"scope_type": {
 				Description: "The scope in which this role is assigned. Valid values are :" +
 					"\n\t- `CUSTOMER`" +
@@ -103,6 +111,9 @@ func resourceRolesAssignmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	scopeType := strings.ToUpper(d.Get("scope_type").(string))
+
+	assigneeType := strings.ToUpper(d.Get("assignee_type").(string))
+
 	orgUnitId := strings.TrimPrefix(d.Get("org_unit_id").(string), "id:")
 	if scopeType == "ORG_UNIT" && orgUnitId == "" {
 		diags = append(diags, diag.Diagnostic{
@@ -115,10 +126,11 @@ func resourceRolesAssignmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	ra := &directory.RoleAssignment{
-		AssignedTo: assignedTo,
-		RoleId:     roleIdInt64,
-		ScopeType:  scopeType,
-		OrgUnitId:  orgUnitId,
+		AssignedTo:   assignedTo,
+		RoleId:       roleIdInt64,
+		ScopeType:    scopeType,
+		AssigneeType: assigneeType,
+		OrgUnitId:    orgUnitId,
 	}
 
 	ra, err = roleAssignmentsService.Insert(client.Customer, ra).Do()
