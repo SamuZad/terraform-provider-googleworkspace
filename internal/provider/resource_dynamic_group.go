@@ -93,6 +93,13 @@ func resourceDynamicGroup() *schema.Resource {
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 4096)),
 			},
+			"labels": {
+				Description: "One or more label entries that apply to the Group. Currently supported labels contain a key with an empty value.",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Default:     map[string]interface{}{"cloudidentity.googleapis.com/groups.discussion_forum": ""},
+			},
 		},
 	}
 }
@@ -116,6 +123,11 @@ func resourceDynamicGroupCreate(ctx context.Context, d *schema.ResourceData, met
 		return diags
 	}
 
+	labels, err := convertInterfaceMapToStringMap(d.Get("labels").(map[string]interface{}))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	groupObj := cloudidentity.Group{
 		GroupKey: &cloudidentity.EntityKey{
 			Id: d.Get("email").(string),
@@ -123,9 +135,7 @@ func resourceDynamicGroupCreate(ctx context.Context, d *schema.ResourceData, met
 		Parent:      "customerId/" + client.Customer,
 		DisplayName: d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels: map[string]string{
-			"cloudidentity.googleapis.com/groups.discussion_forum": "",
-		},
+		Labels:      labels,
 		DynamicGroupMetadata: &cloudidentity.DynamicGroupMetadata{
 			Queries: make([]*cloudidentity.DynamicGroupQuery, 0),
 		},
@@ -182,6 +192,7 @@ func resourceDynamicGroupRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("email", group.GroupKey.Id)
 	d.Set("description", group.Description)
 	d.Set("query", group.DynamicGroupMetadata.Queries[0].Query)
+	d.Set("labels", group.Labels)
 
 	d.SetId(group.Name)
 
@@ -267,6 +278,16 @@ func resourceDynamicGroupUpdate(ctx context.Context, d *schema.ResourceData, met
 		updateMask = append(updateMask, "dynamicGroupMetadata")
 	}
 
+	if d.HasChange("labels") {
+		labels, err := convertInterfaceMapToStringMap(d.Get("labels").(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		groupObj.Labels = labels
+		updateMask = append(updateMask, "labels")
+	}
+
 	updateMaskStr := strings.Join(updateMask, ",")
 
 	if &groupObj != new(cloudidentity.Group) {
@@ -331,4 +352,16 @@ func resourceExampleCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, 
 	}
 
 	return nil
+}
+
+func convertInterfaceMapToStringMap(input map[string]interface{}) (map[string]string, error) {
+	output := make(map[string]string)
+	for key, value := range input {
+		strValue, ok := value.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string for key %s but got %T", key, value)
+		}
+		output[key] = strValue
+	}
+	return output, nil
 }
