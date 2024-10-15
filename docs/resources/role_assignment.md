@@ -82,6 +82,7 @@ resource "googleworkspace_role_assignment" "org-unit-scope" {
 
 ### Optional
 
+- `assignee_type` (String) Defaults to `USER`. The type of the assignee (USER or GROUP).
 - `org_unit_id` (String) If the role is restricted to an organization unit, this contains the ID for the organization unit the exercise of this role is restricted to.
 - `scope_type` (String) Defaults to `CUSTOMER`. The scope in which this role is assigned. Valid values are :
 	- `CUSTOMER`
