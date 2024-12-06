@@ -98,7 +98,6 @@ func resourceDynamicGroup() *schema.Resource {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Default:     map[string]interface{}{"cloudidentity.googleapis.com/groups.discussion_forum": ""},
 			},
 		},
 	}
@@ -123,9 +122,16 @@ func resourceDynamicGroupCreate(ctx context.Context, d *schema.ResourceData, met
 		return diags
 	}
 
-	labels, err := convertInterfaceMapToStringMap(d.Get("labels").(map[string]interface{}))
-	if err != nil {
-		return diag.FromErr(err)
+	labelsRaw, ok := d.GetOk("labels")
+	var labels map[string]string
+	if !ok || len(labelsRaw.(map[string]interface{})) == 0 {
+		labels = map[string]string{"cloudidentity.googleapis.com/groups.discussion_forum": ""}
+	} else {
+		var err error
+		labels, err = convertInterfaceMapToStringMap(labelsRaw.(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	groupObj := cloudidentity.Group{

@@ -23,7 +23,7 @@ Dynamic Group resource manages Google Workspace Groups with Dynamic memberships.
 ### Optional
 
 - `description` (String) An extended description to help users determine the purpose of a group.For example, you can include information about who should join the group,the types of messages to send to the group, links to FAQs about the group, or related groups.
-- `labels` (Map of String) Defaults to `map[cloudidentity.googleapis.com/groups.discussion_forum:]`. One or more label entries that apply to the Group. Currently supported labels contain a key with an empty value.
+- `labels` (Map of String) One or more label entries that apply to the Group. Currently supported labels contain a key with an empty value.
 - `name` (String) The group's display name.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
