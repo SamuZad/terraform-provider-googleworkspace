@@ -97,7 +97,9 @@ func resourceDynamicGroup() *schema.Resource {
 				Description: "One or more label entries that apply to the Group. Currently supported labels contain a key with an empty value.",
 				Type:        schema.TypeMap,
 				Optional:    true,
+				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				DiffSuppressFunc: suppressDynamicLabel,
 			},
 		},
 	}
@@ -370,4 +372,14 @@ func convertInterfaceMapToStringMap(input map[string]interface{}) (map[string]st
 		output[key] = strValue
 	}
 	return output, nil
+}
+
+func suppressDynamicLabel(k, old, new string, d *schema.ResourceData) bool {
+    labelKey := strings.TrimPrefix(k, "labels.")
+
+    if labelKey == "cloudidentity.googleapis.com/groups.dynamic" {
+        // Suppress the diff for the API-added label
+        return true
+    }
+    return false
 }
