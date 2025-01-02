@@ -87,6 +87,7 @@ func resourceGroup() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				DiffSuppressFunc: diffSuppressAliases,
 			},
 			"non_editable_aliases": {
 				Description: "asps.list of the group's non-editable alias email addresses that are outside of the " +
