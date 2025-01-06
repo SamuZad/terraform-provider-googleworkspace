@@ -147,6 +147,7 @@ func New(version string) func() *schema.Provider {
 				"googleworkspace_schema":              resourceSchema(),
 				"googleworkspace_user":                resourceUser(),
 				"googleworkspace_dynamic_group":       resourceDynamicGroup(),
+				"googleworkspace_user_delegate":       resourceUserDelegate(),
 			},
 		}
 

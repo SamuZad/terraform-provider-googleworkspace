@@ -135,6 +135,23 @@ func GetGmailSendAsAliasService(gmailService *gmail.Service) (*gmail.UsersSettin
 	return usersService.Settings.SendAs, diags
 }
 
+func GetGmailUsersSettingsDelegatesService(gmailService *gmail.Service) (*gmail.UsersSettingsDelegatesService, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	log.Printf("[INFO] Instantiating Google Admin Gmail Users Settings service")
+	usersService := gmailService.Users
+	if usersService == nil || usersService.Settings == nil || usersService.Settings.Delegates == nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Delegates Service could not be created.",
+		})
+
+		return nil, diags
+	}
+
+	return usersService.Settings.Delegates, diags
+}
+
 func GetGroupAliasService(groupsService *directory.GroupsService) (*directory.GroupsAliasesService, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
