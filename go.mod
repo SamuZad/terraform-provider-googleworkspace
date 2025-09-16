@@ -1,8 +1,6 @@
 module github.com/hashicorp/terraform-provider-googleworkspace
 
-go 1.21
-
-toolchain go1.22.0
+go 1.22.0
 
 require (
 	github.com/hashicorp/errwrap v1.1.0
@@ -27,7 +25,7 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/cloudflare/circl v1.3.8 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
