@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
 	github.com/mitchellh/go-homedir v1.1.0
-	golang.org/x/oauth2 v0.20.0
+	golang.org/x/oauth2 v0.27.0
 	google.golang.org/api v0.180.0
 )
 
