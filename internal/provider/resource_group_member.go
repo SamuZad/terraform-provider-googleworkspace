@@ -151,9 +151,17 @@ func resourceGroupMemberCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	member, err := membersService.Insert(groupId, &memberObj).Do()
 
-	// If we receive a 409 that the member already exists, ignore it, we'll import it next
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// This might seem redundant (and it is) but the API will sometimes return an empty member ID, which breaks things
+	// If Insert returns an empty member ID, fetch by email to get the ID
+	if member.Id == "" {
+		member, err = membersService.Get(groupId, email).Do()
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.Set("member_id", member.Id)
