@@ -1391,10 +1391,8 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	// Booleans
 
-	if d.HasChange("suspended") {
-		userObj.Suspended = d.Get("suspended").(bool)
-		forceSendFields = append(forceSendFields, "Suspended")
-	}
+	// NOTE: suspended is handled separately AFTER all other changes to avoid conflicts
+	// with alias changes and other updates. See the end of this function.
 
 	if d.HasChange("change_password_at_next_login") {
 		userObj.ChangePasswordAtNextLogin = d.Get("change_password_at_next_login").(bool)
@@ -1617,6 +1615,47 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// Handle suspension as a separate update AFTER all other changes have been applied.
+	// This avoids conflicts when changing aliases and suspending a user simultaneously.
+	if d.HasChange("suspended") {
+		log.Printf("[DEBUG] Applying suspension change for User %q as a separate update", d.Id())
+
+		suspendObj := directory.User{
+			Suspended:       d.Get("suspended").(bool),
+			ForceSendFields: []string{"Suspended"},
+		}
+
+		_, err := usersService.Update(d.Id(), &suspendObj).Do()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Consistency check for suspension update
+		suspendCC := consistencyCheck{
+			resourceType: "user suspension",
+			timeout:      d.Timeout(schema.TimeoutUpdate),
+		}
+		err = retryTimeDuration(ctx, d.Timeout(schema.TimeoutUpdate), func() error {
+			if suspendCC.reachedConsistency(1) {
+				return nil
+			}
+
+			newUser, retryErr := usersService.Get(d.Id()).IfNoneMatch(suspendCC.lastEtag).Do()
+			if googleapi.IsNotModified(retryErr) {
+				suspendCC.currConsistent += 1
+			} else if retryErr != nil {
+				return fmt.Errorf("unexpected error during retries of %s: %s", suspendCC.resourceType, retryErr)
+			} else {
+				suspendCC.handleNewEtag(newUser.Etag)
+			}
+
+			return fmt.Errorf("timed out while waiting for %s to be updated", suspendCC.resourceType)
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	log.Printf("[DEBUG] Finished updating User %q: %#v", d.Id(), primaryEmail)
