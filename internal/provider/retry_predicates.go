@@ -29,6 +29,7 @@ var defaultErrorRetryPredicates = []RetryErrorPredicateFunc{
 	// Common error codes
 	isCommonRetryableErrorCode,
 	isRateLimitExceeded,
+	isConcurrentUpdateError,
 }
 
 /** END GLOBAL ERROR RETRY PREDICATES HERE **/
@@ -121,6 +122,23 @@ func isRateLimitExceeded(err error) (bool, string) {
 	if gerr.Code == 403 && (strings.Contains(gerr.Error(), "Quota exceeded") || strings.Contains(gerr.Error(), "quotaExceeded")) {
 		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
 		return true, fmt.Sprintf("Retryable error code %d", gerr.Code)
+	}
+
+	return false, ""
+}
+
+// isConcurrentUpdateError handles 412 Precondition Failed errors that occur when
+// concurrent updates are made to a resource (e.g., changing primary email while
+// modifying aliases). These errors are transient and should be retried.
+func isConcurrentUpdateError(err error) (bool, string) {
+	gerr, ok := err.(*googleapi.Error)
+	if !ok {
+		return false, ""
+	}
+
+	if gerr.Code == 412 {
+		log.Printf("[DEBUG] Dismissed an error as retryable based on error code (concurrent update): %s", err)
+		return true, fmt.Sprintf("Retryable concurrent update error code %d", gerr.Code)
 	}
 
 	return false, ""
