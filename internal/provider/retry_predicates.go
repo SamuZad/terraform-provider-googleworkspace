@@ -127,9 +127,16 @@ func isRateLimitExceeded(err error) (bool, string) {
 	return false, ""
 }
 
-// isConcurrentUpdateError handles 412 Precondition Failed errors that occur when
-// concurrent updates are made to a resource (e.g., changing primary email while
-// modifying aliases). These errors are transient and should be retried.
+// isConcurrentUpdateError handles transient errors caused by back-to-back
+// mutations on the same Directory resource where a previous write has not yet
+// fully propagated. Common cases:
+//   - 412 Precondition Failed: etag mismatch from concurrent updates (e.g.
+//     changing primary email while modifying aliases).
+//   - 400 "Invalid Input: resource_id": a sub-resource address (e.g. an alias
+//     key under a user) is briefly unresolvable while the parent mutation is
+//     still draining. The immutable user id itself is stable, but Google's
+//     backend occasionally rejects the addressed sub-resource until the
+//     previous write lands.
 func isConcurrentUpdateError(err error) (bool, string) {
 	gerr, ok := err.(*googleapi.Error)
 	if !ok {
@@ -138,6 +145,11 @@ func isConcurrentUpdateError(err error) (bool, string) {
 
 	if gerr.Code == 412 {
 		log.Printf("[DEBUG] Dismissed an error as retryable based on error code (concurrent update): %s", err)
+		return true, fmt.Sprintf("Retryable concurrent update error code %d", gerr.Code)
+	}
+
+	if gerr.Code == 400 && strings.Contains(gerr.Body, "Invalid Input: resource_id") {
+		log.Printf("[DEBUG] Dismissed an error as retryable based on error code (propagating resource_id): %s", err)
 		return true, fmt.Sprintf("Retryable concurrent update error code %d", gerr.Code)
 	}
 

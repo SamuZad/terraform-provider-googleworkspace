@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const defaultRetryTransportTimeoutSec = 90
+const defaultRetryTransportTimeoutSec = 180
 
 type retryTransport struct {
 	retryPredicates []RetryErrorPredicateFunc
