@@ -32,13 +32,13 @@ func testSweepGroup(region string) error {
 	directoryService, diags := client.NewDirectoryService()
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error creating directory service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	groupsService, diags := GetGroupsService(directoryService)
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error getting groups service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	groups, err := groupsService.List().Customer(client.Customer).Do()

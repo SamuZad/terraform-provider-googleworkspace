@@ -32,13 +32,13 @@ func testSweepSchema(region string) error {
 	directoryService, diags := client.NewDirectoryService()
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error creating directory service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	schemasService, diags := GetSchemasService(directoryService)
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error getting schemas service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	schemas, err := schemasService.List(client.Customer).Do()

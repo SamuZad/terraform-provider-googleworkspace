@@ -43,7 +43,7 @@ func TestConfigLoadAndValidate_credsJSON(t *testing.T) {
 	diags := config.loadAndValidate(context.Background())
 	err = checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 }
 
@@ -56,7 +56,7 @@ func TestConfigLoadAndValidate_credsFromFile(t *testing.T) {
 	diags := config.loadAndValidate(context.Background())
 	err := checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 }
 
@@ -77,13 +77,13 @@ func TestAccConfigLoadAndValidate_credsFromEnv(t *testing.T) {
 	diags := config.loadAndValidate(context.Background())
 	err := checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 
 	diags = checkValidCreds(config)
 	err = checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 }
 
@@ -95,7 +95,7 @@ func TestConfigLoadAndValidate_credsNoImpersonation(t *testing.T) {
 	diags := config.loadAndValidate(context.Background())
 	err := checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 }
 
@@ -109,7 +109,7 @@ func TestConfigOauthScopes_custom(t *testing.T) {
 	diags := config.loadAndValidate(context.Background())
 	err := checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 
 	if len(config.ClientScopes) != 1 {
@@ -152,12 +152,12 @@ func TestConfigLoadAndValidate_accessToken(t *testing.T) {
 	diags := gcpConfig.loadAndValidate(context.Background())
 	err := checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 
 	iamCredsService, err := iamcredentials.NewService(context.Background(), option.WithHTTPClient(gcpConfig.client))
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 	serviceAccount := fmt.Sprintf("projects/-/serviceAccounts/%s", os.Getenv("GOOGLEWORKSPACE_IMPERSONATED_SERVICE_ACCOUNT"))
 	tokenRequest := &iamcredentials.GenerateAccessTokenRequest{
@@ -166,7 +166,7 @@ func TestConfigLoadAndValidate_accessToken(t *testing.T) {
 	}
 	at, err := iamCredsService.Projects.ServiceAccounts.GenerateAccessToken(serviceAccount, tokenRequest).Do()
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 
 	config := &apiClient{
@@ -179,13 +179,13 @@ func TestConfigLoadAndValidate_accessToken(t *testing.T) {
 	diags = config.loadAndValidate(context.Background())
 	err = checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 
 	diags = checkValidCreds(config)
 	err = checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 }
 
@@ -233,13 +233,13 @@ func TestConfigLoadAndValidate_accessTokenOnly(t *testing.T) {
 	diags := config.loadAndValidate(context.Background())
 	err = checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 
 	diags = checkValidCredsGroupAdmin(config)
 	err = checkDiags(diags)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 }
 

@@ -32,13 +32,13 @@ func testSweepDomain(region string) error {
 	directoryService, diags := client.NewDirectoryService()
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error creating directory service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	domainsService, diags := GetDomainsService(directoryService)
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error getting domains service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	domains, err := domainsService.List(client.Customer).Do()
