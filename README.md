@@ -1,27 +1,24 @@
 # Terraform Provider Google Workspace
 <a href="https://terraform.io">
-    <img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" alt="Terraform logo" align="right" height="50" />
+    <img src="https://www.datocms-assets.com/2885/1620155116-brandhcterraformverticalcolor.svg" alt="Terraform logo" align="right" height="50" />
 </a>
 
-![Status: Tech Preview](https://img.shields.io/badge/status-experimental-EAAA32) [![Releases](https://img.shields.io/github/release/hashicorp/terraform-provider-googleworkspace.svg)](https://github.com/hashicorp/terraform-provider-googleworkspace/releases)
-[![LICENSE](https://img.shields.io/github/license/hashicorp/terraform-provider-googleworkspace.svg)](https://github.com/hashicorp/terraform-provider-googleworkspace/blob/main/LICENSE)![Unit tests](https://github.com/hashicorp/terraform-provider-googleworkspace/workflows/Unit%20tests/badge.svg)
+[![Releases](https://img.shields.io/github/release/SamuZad/terraform-provider-googleworkspace.svg)](https://github.com/SamuZad/terraform-provider-googleworkspace/releases)
+[![LICENSE](https://img.shields.io/github/license/SamuZad/terraform-provider-googleworkspace.svg)](https://github.com/SamuZad/terraform-provider-googleworkspace/blob/main/LICENSE)
+[![Unit tests](https://github.com/SamuZad/terraform-provider-googleworkspace/actions/workflows/test.yml/badge.svg)](https://github.com/SamuZad/terraform-provider-googleworkspace/actions/workflows/test.yml)
 
 This Google Workspace provider for Terraform allows you to manage domains, users, and groups in your Google Workspace.
 
-This provider is a technical preview, which means it's a community supported project. It still requires extensive testing and polishing to mature into a HashiCorp officially supported project. Please [file issues](https://github.com/hashicorp/terraform-provider-googleworkspace/issues/new/choose) generously and detail your experience while using the provider. We welcome your feedback.
-
-## Experimental Status
-
-By using the software in this repository (the "Software"), you acknowledge that: (1) the Software is still in development, may change, and has not been released as a commercial product by HashiCorp and is not currently supported in any way by HashiCorp; (2) the Software is provided on an "as-is" basis, and may include bugs, errors, or other issues; (3) the Software is NOT INTENDED FOR PRODUCTION USE, use of the Software may result in unexpected results, loss of data, or other unexpected results, and HashiCorp disclaims any and all liability resulting from use of the Software; and (4) HashiCorp reserves all rights to make all decisions about the features, functionality and commercial release (or non-release) of the Software, at any time and without any obligation or liability whatsoever.
+This is a community-maintained fork of the [`hashicorp/terraform-provider-googleworkspace`](https://github.com/hashicorp/terraform-provider-googleworkspace) provider, which was archived by HashiCorp on 2025-06-30. It is published to the Terraform Registry as [`SamuZad/googleworkspace`](https://registry.terraform.io/providers/SamuZad/googleworkspace/latest). Please [file issues](https://github.com/SamuZad/terraform-provider-googleworkspace/issues/new/choose) generously and detail your experience while using the provider. We welcome your feedback.
 
 ## Maintainers
 
-This provider plugin is maintained by the Terraform team at [HashiCorp](https://www.hashicorp.com/)
+This fork is maintained by [@SamuZad](https://github.com/SamuZad). It descends from the original `hashicorp/terraform-provider-googleworkspace`, which is no longer maintained upstream.
 
 ## Requirements
 
--	[Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
--	[Go](https://golang.org/doc/install) >= 1.16
+-	[Terraform](https://www.terraform.io/downloads.html) >= 0.13.x (or [OpenTofu](https://opentofu.org))
+-	[Go](https://golang.org/doc/install) >= 1.24 (to build the provider)
 
 ## Upgrading the provider
 
@@ -59,7 +56,7 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using The provider
 
-See the [Google Workspace Provider documentation](https://registry.terraform.io/providers/hashicorp/googleworkspace/latest/docs) to get started using the
+See the [Google Workspace Provider documentation](https://registry.terraform.io/providers/SamuZad/googleworkspace/latest/docs) to get started using the
 Google Workspace provider.
 
 ## Developing the Provider
@@ -78,7 +75,7 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 $ make testacc
 ```
 
-For guidance on common development practices such as testing changes, see the [contribution guidelines](https://github.com/hashicorp/terraform-provider-googleworkspace/blob/main/.github/CONTRIBUTING.md).
+For guidance on common development practices such as testing changes, see the [contribution guidelines](https://github.com/SamuZad/terraform-provider-googleworkspace/blob/main/.github/CONTRIBUTING.md).
 If you have other development questions we don't cover, please file an issue!
 
 ## Special Recognition
