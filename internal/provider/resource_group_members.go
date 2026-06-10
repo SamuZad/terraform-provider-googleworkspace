@@ -219,6 +219,12 @@ func resourceGroupMembersRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	members := make([]interface{}, len(result))
 	for i, member := range result {
+		if !includeDerivedMembership && member.Id == "" && member.Email != "" {
+			member, err = membersService.Get(groupId, member.Email).Do()
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
 
 		// Use value if present or default as "delivery_settings" is not provided by API
 		deliverySettings := deliverySettingsDefault

@@ -4,15 +4,25 @@
 package googleworkspace
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
 
 func TestAccResourceGroupMembers_basic(t *testing.T) {
 	t.Parallel()
@@ -52,6 +62,60 @@ func TestAccResourceGroupMembers_basic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestResourceGroupMembersReadFetchesEmptyMemberID(t *testing.T) {
+	groupID := "group@example.com"
+	memberEmail := "user@example.com"
+	memberID := "1234567890"
+
+	resourceSchema := resourceGroupMembers()
+	d := schema.TestResourceDataRaw(t, resourceSchema.Schema, map[string]interface{}{
+		"group_id": groupID,
+		"members": []interface{}{
+			map[string]interface{}{
+				"email": memberEmail,
+			},
+		},
+	})
+
+	client := &apiClient{
+		client: &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				var body string
+
+				switch req.URL.Path {
+				case "/admin/directory/v1/groups/group@example.com/members":
+					body = fmt.Sprintf(`{"members":[{"email":%q,"role":"MEMBER","type":"USER","status":"ACTIVE","id":""}]}`, memberEmail)
+				case "/admin/directory/v1/groups/group@example.com/members/user@example.com":
+					body = fmt.Sprintf(`{"email":%q,"role":"MEMBER","type":"USER","status":"ACTIVE","id":%q}`, memberEmail, memberID)
+				default:
+					t.Fatalf("unexpected request path %q", req.URL.Path)
+				}
+
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     make(http.Header),
+					Body:       io.NopCloser(strings.NewReader(body)),
+					Request:    req,
+				}, nil
+			}),
+		},
+	}
+
+	if diags := resourceGroupMembersRead(context.Background(), d, client); diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %#v", diags)
+	}
+
+	members := d.Get("members").(*schema.Set).List()
+	if len(members) != 1 {
+		t.Fatalf("expected 1 member in state, got %d", len(members))
+	}
+
+	member := members[0].(map[string]interface{})
+	if got := member["id"]; got != memberID {
+		t.Fatalf("expected member id %q, got %q", memberID, got)
+	}
 }
 
 func TestAccResourceGroupMembers_empty(t *testing.T) {
