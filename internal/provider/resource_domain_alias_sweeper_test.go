@@ -32,13 +32,13 @@ func testSweepDomainAlias(region string) error {
 	directoryService, diags := client.NewDirectoryService()
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error creating directory service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	domainAliasesService, diags := GetDomainAliasesService(directoryService)
 	if diags.HasError() {
 		log.Printf("[INFO][SWEEPER_LOG] Error getting domain aliases service: %s", diags[0].Summary)
-		return fmt.Errorf(diags[0].Summary)
+		return fmt.Errorf("%s", diags[0].Summary)
 	}
 
 	domainAliases, err := domainAliasesService.List(client.Customer).Do()
