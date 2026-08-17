@@ -472,7 +472,7 @@ func resourceGroupSettingsRead(ctx context.Context, d *schema.ResourceData, meta
 
 	group, err := groupsService.Get(d.Id()).Do()
 	if err != nil {
-		return diag.FromErr(err)
+		return handleNotFoundError(err, d, d.Get("email").(string))
 	}
 
 	// Convert strings to bools

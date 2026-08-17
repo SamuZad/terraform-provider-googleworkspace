@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccResourceGroupSettings_basic(t *testing.T) {
@@ -40,6 +41,70 @@ func TestAccResourceGroupSettings_basic(t *testing.T) {
 			},
 		},
 	})
+}
+
+// group_settings can only 404 once its group is gone, so the group is deleted
+// out-of-band here.
+func TestAccResourceGroupSettings_disappears(t *testing.T) {
+	t.Parallel()
+
+	domainName := os.Getenv("GOOGLEWORKSPACE_DOMAIN")
+
+	if domainName == "" {
+		t.Skip("GOOGLEWORKSPACE_DOMAIN needs to be set to run this test")
+	}
+
+	testGroupVals := map[string]interface{}{
+		"domainName": domainName,
+		"email":      fmt.Sprintf("tf-test-%s", acctest.RandString(10)),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceGroupSettings_basic(testGroupVals),
+			},
+			{
+				Config: testAccResourceGroupSettings_basic(testGroupVals),
+				Check: resource.ComposeTestCheckFunc(
+					testAccDeleteGroupOutOfBand("googleworkspace_group.my-group"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func testAccDeleteGroupOutOfBand(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("%s key not found in state", resourceName)
+		}
+
+		client, err := googleworkspaceTestClient()
+		if err != nil {
+			return err
+		}
+
+		directoryService, diags := client.NewDirectoryService()
+		if diags.HasError() {
+			return fmt.Errorf("Error creating directory service %+v", diags)
+		}
+
+		groupsService, diags := GetGroupsService(directoryService)
+		if diags.HasError() {
+			return fmt.Errorf("Error getting groups service %+v", diags)
+		}
+
+		if err := groupsService.Delete(rs.Primary.ID).Do(); err != nil {
+			return fmt.Errorf("error deleting group out of band (%s): %w", rs.Primary.ID, err)
+		}
+
+		return nil
+	}
 }
 
 func TestAccResourceGroupSettings_full(t *testing.T) {
