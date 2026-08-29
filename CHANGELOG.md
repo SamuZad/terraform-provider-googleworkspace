@@ -1,4 +1,9 @@
 ## 0.8.0 (Unreleased)
+
+BUG FIXES:
+
+* directory: `googleworkspace_group_settings` is now removed from state on a 404 read (e.g. when its group is deleted outside Terraform) instead of failing the plan ([#30](https://github.com/SamuZad/terraform-provider-googleworkspace/pull/30))
+
 ## 0.7.0 (June 10, 2022)
 
 FEATURES:
