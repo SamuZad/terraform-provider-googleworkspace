@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
+	directory "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/cloudidentity/v1"
 )
 
@@ -96,6 +97,15 @@ func resourceDynamicGroup() *schema.Resource {
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 4096)),
 			},
+			"aliases": {
+				Description:      "List of the group's alias email addresses.",
+				Type:             schema.TypeList,
+				Optional:         true,
+				DiffSuppressFunc: diffSuppressAliases,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"labels": {
 				Description:      "One or more label entries that apply to the Group. Currently supported labels contain a key with an empty value.",
 				Type:             schema.TypeMap,
@@ -173,6 +183,29 @@ func resourceDynamicGroupCreate(ctx context.Context, d *schema.ResourceData, met
 
 	d.SetId(groupResponse.Name)
 
+	aliases := listOfInterfacestoStrings(d.Get("aliases").([]interface{}))
+	if len(aliases) > 0 {
+		aliasesService, diags := getDynamicGroupAliasService(client)
+		if diags.HasError() {
+			return diags
+		}
+
+		for _, alias := range aliases {
+			aliasObj := directory.Alias{
+				Alias: alias,
+			}
+
+			// the directory API may lag behind cloud identity on group creation
+			err := retryNotFound(ctx, func() error {
+				_, e := aliasesService.Insert(email, &aliasObj).Do()
+				return e
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
 	log.Printf("[DEBUG] Finished creating Dynamic Group %q: %#v", d.Id(), email)
 
 	return resourceDynamicGroupRead(ctx, d, meta)
@@ -209,6 +242,28 @@ func resourceDynamicGroupRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("query", normalizeDynamicGroupQuery(group.DynamicGroupMetadata.Queries[0].Query))
 	d.Set("labels", group.Labels)
 
+	// aliases only live in the directory API
+	directoryService, diags := client.NewDirectoryService()
+	if diags.HasError() {
+		return diags
+	}
+
+	dirGroupsService, diags := GetGroupsService(directoryService)
+	if diags.HasError() {
+		return diags
+	}
+
+	var dirGroup *directory.Group
+	err = retryNotFound(ctx, func() (e error) {
+		dirGroup, e = dirGroupsService.Get(group.GroupKey.Id).Do()
+		return
+	})
+	if err != nil {
+		return handleNotFoundError(err, d, group.GroupKey.Id)
+	}
+
+	d.Set("aliases", dirGroup.Aliases)
+
 	d.SetId(group.Name)
 
 	return diags
@@ -233,10 +288,10 @@ func resourceDynamicGroupUpdate(ctx context.Context, d *schema.ResourceData, met
 		return diags
 	}
 
-	if d.HasChange("email") && d.HasChangesExcept("email") {
+	if d.HasChange("email") && d.HasChangesExcept("email", "aliases") {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "If you change the email address of a group, you must only change the email address.",
+			Summary:  "If you change the email address of a group, you must only change the email address (and optionally its aliases).",
 		})
 		return diags
 
@@ -248,6 +303,12 @@ func resourceDynamicGroupUpdate(ctx context.Context, d *schema.ResourceData, met
 			Summary:  "If you change the query of a group, you must only change the query.",
 		})
 		return diags
+	}
+
+	oldEmail := ""
+	if d.HasChange("email") && d.IsNewResource() == false {
+		oldE, _ := d.GetChange("email")
+		oldEmail = oldE.(string)
 	}
 
 	groupObj := cloudidentity.Group{}
@@ -305,7 +366,7 @@ func resourceDynamicGroupUpdate(ctx context.Context, d *schema.ResourceData, met
 
 	updateMaskStr := strings.Join(updateMask, ",")
 
-	if &groupObj != new(cloudidentity.Group) {
+	if len(updateMask) > 0 {
 		group, err := groupsService.Patch(d.Id(), &groupObj).UpdateMask(updateMaskStr).Do()
 		if err != nil {
 			return diag.FromErr(err)
@@ -319,6 +380,82 @@ func resourceDynamicGroupUpdate(ctx context.Context, d *schema.ResourceData, met
 		}
 
 		d.SetId(groupResponse.Name)
+	}
+
+	// a stale read after a rename would poison state (and downstream references) with the old email
+	if oldEmail != "" {
+		err := retryTimeDuration(ctx, d.Timeout(schema.TimeoutUpdate), func() error {
+			group, retryErr := groupsService.Get(d.Id()).Do()
+			if retryErr != nil {
+				return retryErr
+			}
+			if group.GroupKey.Id != email {
+				return fmt.Errorf("timed out while waiting for group rename to %q to propagate, API still returns %q", email, group.GroupKey.Id)
+			}
+			return nil
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("aliases") || oldEmail != "" {
+		aliasesService, diags := getDynamicGroupAliasService(client)
+		if diags.HasError() {
+			return diags
+		}
+
+		if d.HasChange("aliases") {
+			old, new := d.GetChange("aliases")
+			oldAliases := listOfInterfacestoStrings(old.([]interface{}))
+			newAliases := listOfInterfacestoStrings(new.([]interface{}))
+
+			for _, alias := range oldAliases {
+				if stringInSlice(newAliases, alias) {
+					continue
+				}
+
+				err := retryNotFound(ctx, func() error {
+					return aliasesService.Delete(email, alias).Do()
+				})
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+
+			for _, alias := range newAliases {
+				if stringInSlice(oldAliases, alias) {
+					continue
+				}
+
+				// the old email becomes an alias automatically once the rename applies
+				if alias == oldEmail {
+					continue
+				}
+
+				aliasObj := directory.Alias{
+					Alias: alias,
+				}
+
+				err := retryNotFound(ctx, func() error {
+					_, e := aliasesService.Insert(email, &aliasObj).Do()
+					return e
+				})
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
+
+		// Remove the auto-created old-email alias, unless it's explicitly configured
+		if oldEmail != "" && !stringInSlice(listOfInterfacestoStrings(d.Get("aliases").([]interface{})), oldEmail) {
+			err := retryNotFound(ctx, func() error {
+				return aliasesService.Delete(email, oldEmail).Do()
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
 	}
 
 	log.Printf("[DEBUG] Finished updating Dynamic Group %q: %#v", d.Id(), email)
@@ -362,6 +499,20 @@ func normalizeDynamicGroupQuery(query string) string {
 	}
 
 	return matches[1]
+}
+
+func getDynamicGroupAliasService(client *apiClient) (*directory.GroupsAliasesService, diag.Diagnostics) {
+	directoryService, diags := client.NewDirectoryService()
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	groupsService, diags := GetGroupsService(directoryService)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return GetGroupAliasService(groupsService)
 }
 
 // I'm leaving this here but it does not work. UpdatedKeys() returns an empty
