@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -704,6 +705,30 @@ func resourceGroupSettingsUpdate(ctx context.Context, d *schema.ResourceData, me
 
 	if len(forceSendFields) > 0 {
 		groupSettingsObj.ForceSendFields = forceSendFields
+	}
+
+	// a group rename only changes email; an empty settings update is rejected with 400: Required.
+	// wait for the rename to propagate to the groupssettings API, then read as usual
+	if reflect.DeepEqual(groupSettingsObj, groupssettings.Groups{}) {
+		err := retryTimeDuration(ctx, d.Timeout(schema.TimeoutUpdate), func() error {
+			gs, retryErr := groupsService.Get(email).Do()
+			if retryErr != nil {
+				if isApiErrorWithCode(retryErr, 404) {
+					return fmt.Errorf("timed out while waiting for group settings %q to propagate: %s", email, retryErr)
+				}
+				return retryErr
+			}
+			if gs.Email != email {
+				return fmt.Errorf("timed out while waiting for group settings %q to propagate, API still returns %q", email, gs.Email)
+			}
+			return nil
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		d.SetId(email)
+		return resourceGroupSettingsRead(ctx, d, meta)
 	}
 
 	groupSettings, err := groupsService.Update(email, &groupSettingsObj).Do()
