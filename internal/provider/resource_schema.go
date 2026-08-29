@@ -231,7 +231,11 @@ func resourceSchemaRead(ctx context.Context, d *schema.ResourceData, meta interf
 	schemaName := d.Get("schema_name").(string)
 	log.Printf("[DEBUG] Getting Schema %q: %#v", d.Id(), schemaName)
 
-	schema, err := schemasService.Get(client.Customer, d.Id()).Do()
+	var schema *directory.Schema
+	err := retryNotFound(ctx, func() (e error) {
+		schema, e = schemasService.Get(client.Customer, d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, schemaName)
 	}

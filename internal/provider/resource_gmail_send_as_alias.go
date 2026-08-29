@@ -221,7 +221,11 @@ func resourceGmailSendAsAliasRead(ctx context.Context, d *schema.ResourceData, m
 
 	log.Printf("[DEBUG] Getting Gmail Send As Alias %q", d.Id())
 
-	sendAs, err := sendAsAliasService.Get("me", d.Get("send_as_email").(string)).Do()
+	var sendAs *gmail.SendAs
+	err := retryNotFound(ctx, func() (e error) {
+		sendAs, e = sendAsAliasService.Get("me", d.Get("send_as_email").(string)).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}

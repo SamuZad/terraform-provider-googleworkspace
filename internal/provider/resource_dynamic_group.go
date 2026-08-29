@@ -191,7 +191,11 @@ func resourceDynamicGroupRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diags
 	}
 
-	group, err := groupsService.Get(d.Id()).Do()
+	var group *cloudidentity.Group
+	err := retryNotFound(ctx, func() (e error) {
+		group, e = groupsService.Get(d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Get("email").(string))
 	}

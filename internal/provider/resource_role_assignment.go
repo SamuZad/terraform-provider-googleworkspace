@@ -162,7 +162,11 @@ func resourceRoleAssignmentRead(ctx context.Context, d *schema.ResourceData, met
 
 	log.Printf("[DEBUG] Getting RoleAssignment %q", d.Id())
 
-	ra, err := roleAssignmentsService.Get(client.Customer, d.Id()).Do()
+	var ra *directory.RoleAssignment
+	err := retryNotFound(ctx, func() (e error) {
+		ra, e = roleAssignmentsService.Get(client.Customer, d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}

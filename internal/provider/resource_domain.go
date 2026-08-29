@@ -128,7 +128,11 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, meta interf
 
 	log.Printf("[DEBUG] Getting Domain %q: %#v", d.Id(), d.Id())
 
-	domain, err := domainsService.Get(client.Customer, d.Id()).Do()
+	var domain *directory.Domains
+	err := retryNotFound(ctx, func() (e error) {
+		domain, e = domainsService.Get(client.Customer, d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}

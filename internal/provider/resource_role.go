@@ -149,7 +149,11 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Getting Role %q", d.Id())
 
-	role, err := rolesService.Get(client.Customer, d.Id()).Do()
+	var role *directory.Role
+	err := retryNotFound(ctx, func() (e error) {
+		role, e = rolesService.Get(client.Customer, d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}
