@@ -269,6 +269,12 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		groupObj.Description = d.Get("description").(string)
 	}
 
+	oldEmail := ""
+	if d.HasChange("email") && d.IsNewResource() == false {
+		oldE, _ := d.GetChange("email")
+		oldEmail = oldE.(string)
+	}
+
 	numInserts := 0
 	if d.HasChange("aliases") {
 		old, new := d.GetChange("aliases")
@@ -295,6 +301,11 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		// Insert all new aliases that weren't previously in state
 		for _, alias := range newAliases {
 			if stringInSlice(oldAliases, alias) {
+				continue
+			}
+
+			// the old email becomes an alias automatically once the rename applies
+			if alias == oldEmail {
 				continue
 			}
 
@@ -348,6 +359,36 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// Remove the auto-created old-email alias, unless it's explicitly configured
+	if oldEmail != "" && !stringInSlice(listOfInterfacestoStrings(d.Get("aliases").([]interface{})), oldEmail) {
+		aliasesService, diags := GetGroupAliasService(groupsService)
+		if diags.HasError() {
+			return diags
+		}
+
+		err := aliasesService.Delete(d.Id(), oldEmail).Do()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	// a stale read after a rename would poison state (and downstream references) with the old email
+	if oldEmail != "" {
+		err := retryTimeDuration(ctx, d.Timeout(schema.TimeoutUpdate), func() error {
+			group, retryErr := groupsService.Get(d.Id()).Do()
+			if retryErr != nil {
+				return retryErr
+			}
+			if group.Email != email {
+				return fmt.Errorf("timed out while waiting for group rename to %q to propagate, API still returns %q", email, group.Email)
+			}
+			return nil
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	log.Printf("[DEBUG] Finished creating Group %q: %#v", d.Id(), email)

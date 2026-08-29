@@ -1507,6 +1507,12 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		}
 	}
 
+	oldPrimaryEmail := ""
+	if d.HasChange("primary_email") && d.IsNewResource() == false {
+		oldPE, _ := d.GetChange("primary_email")
+		oldPrimaryEmail = oldPE.(string)
+	}
+
 	numInserts := 0
 	if d.HasChange("aliases") {
 		old, new := d.GetChange("aliases")
@@ -1534,6 +1540,11 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		// Insert all new aliases that weren't previously in state
 		for _, alias := range newAliases {
 			if stringInSlice(oldAliases, alias) {
+				continue
+			}
+
+			// the old primary already exists as an alias, auto-created by the rename
+			if alias == oldPrimaryEmail {
 				continue
 			}
 
@@ -1600,20 +1611,33 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return fmt.Errorf("timed out while waiting for %s to be updated", cc.resourceType)
 	})
 
-	if d.HasChange("primary_email") && d.IsNewResource() == false {
-		old, _ := d.GetChange("primary_email")
-		oldPrimary := old.(string)
-
-		// Remove old primary pleeeeease
-
+	// Remove the auto-created old-primary alias, unless it's explicitly configured
+	if oldPrimaryEmail != "" && !stringInSlice(listOfInterfacestoStrings(d.Get("aliases").([]interface{})), oldPrimaryEmail) {
 		aliasesService, diags := GetUserAliasService(usersService)
 		if diags.HasError() {
 			return diags
 		}
 
-		err := aliasesService.Delete(d.Id(), oldPrimary).Do()
+		err := aliasesService.Delete(d.Id(), oldPrimaryEmail).Do()
 		if err != nil {
 			return diag.FromErr(err)
+		}
+	}
+
+	// a stale read after a rename would poison state (and downstream references) with the old email
+	if oldPrimaryEmail != "" {
+		renameErr := retryTimeDuration(ctx, d.Timeout(schema.TimeoutUpdate), func() error {
+			user, retryErr := usersService.Get(d.Id()).Do()
+			if retryErr != nil {
+				return retryErr
+			}
+			if user.PrimaryEmail != primaryEmail {
+				return fmt.Errorf("timed out while waiting for user rename to %q to propagate, API still returns %q", primaryEmail, user.PrimaryEmail)
+			}
+			return nil
+		})
+		if renameErr != nil {
+			return diag.FromErr(renameErr)
 		}
 	}
 
