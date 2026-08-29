@@ -15,8 +15,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -26,3 +26,61 @@ jobs:
         run: go vet ./...
       - name: Unit tests
         run: make test
+
+  acceptance:
+    name: Acceptance tests (Terraform ${{ matrix.terraform }})
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform: ["1.5.*", "1.9.*", "1.12.*", "latest"]
+    env:
+      GOOGLEWORKSPACE_CREDENTIALS: ${{ secrets.GOOGLEWORKSPACE_CREDENTIALS }}
+      GOOGLEWORKSPACE_CUSTOMER_ID: ${{ secrets.GOOGLEWORKSPACE_CUSTOMER_ID }}
+      GOOGLEWORKSPACE_DOMAIN: ${{ secrets.GOOGLEWORKSPACE_DOMAIN }}
+      GOOGLEWORKSPACE_IMPERSONATED_USER_EMAIL: ${{ secrets.GOOGLEWORKSPACE_IMPERSONATED_USER_EMAIL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+      - name: Acceptance tests
+        # Acceptance tests need real Google Workspace credentials; skip when the secrets aren't configured.
+        if: env.GOOGLEWORKSPACE_CREDENTIALS != ''
+        run: make testacc
+
+  acceptance-opentofu:
+    name: Acceptance tests (OpenTofu ${{ matrix.opentofu }})
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        opentofu: ["1.6.*", "1.8.*", "latest"]
+    env:
+      GOOGLEWORKSPACE_CREDENTIALS: ${{ secrets.GOOGLEWORKSPACE_CREDENTIALS }}
+      GOOGLEWORKSPACE_CUSTOMER_ID: ${{ secrets.GOOGLEWORKSPACE_CUSTOMER_ID }}
+      GOOGLEWORKSPACE_DOMAIN: ${{ secrets.GOOGLEWORKSPACE_DOMAIN }}
+      GOOGLEWORKSPACE_IMPERSONATED_USER_EMAIL: ${{ secrets.GOOGLEWORKSPACE_IMPERSONATED_USER_EMAIL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_version: ${{ matrix.opentofu }}
+          tofu_wrapper: false
+          # Exports TF_ACC_TERRAFORM_PATH (absolute tofu path) so the SDK harness runs against OpenTofu.
+          provider_acceptance_tests: true
+      - name: Acceptance tests
+        # Acceptance tests need real Google Workspace credentials; skip when the secrets aren't configured.
+        if: env.GOOGLEWORKSPACE_CREDENTIALS != ''
+        run: make testacc

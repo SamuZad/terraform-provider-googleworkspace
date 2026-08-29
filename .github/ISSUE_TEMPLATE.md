@@ -1,6 +1,15 @@
 Hi there,
 
-Thank you for opening an issue. Please note that we try to keep the Terraform issue tracker reserved for bug reports and feature requests. For general usage questions, please see: https://www.terraform.io/community.html.
+Thank you for opening an issue.
+
+**Please note:** this is a community-maintained fork of the Google Workspace provider and is **not** affiliated with, supported by, or maintained by HashiCorp. Issues here should be specific to this provider.
+
+For anything that isn't specific to the Google Workspace provider, please use the appropriate channel instead:
+- **Terraform core** (bugs in `terraform` itself): https://github.com/hashicorp/terraform/issues
+- **General usage questions and help**: https://discuss.hashicorp.com/c/terraform-core
+- **Other providers**: open an issue on that provider's own repository
+
+This issue tracker is reserved for bug reports and feature requests specific to this provider.
 
 ### Terraform Version
 Run `terraform -v` to show the version. If you are not running the latest version of Terraform, please upgrade because your issue may have already been fixed.

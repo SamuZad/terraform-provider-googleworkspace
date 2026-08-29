@@ -1,3 +1,0 @@
-path "gcp/key/tf-acctest" {
-  capabilities = ["read"]
-}
