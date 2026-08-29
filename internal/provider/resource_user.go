@@ -1352,9 +1352,9 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 			if err != nil {
 				return diag.FromErr(err)
 			}
+		} else {
+			userObj.PrimaryEmail = primaryEmail
 		}
-
-		userObj.PrimaryEmail = primaryEmail
 	}
 
 	if d.HasChange("password") {
