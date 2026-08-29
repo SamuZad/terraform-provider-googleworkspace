@@ -310,6 +310,76 @@ func TestAccResourceUser_customSchemasMultiple(t *testing.T) {
 	})
 }
 
+func TestAccResourceUser_renameKeepAlias(t *testing.T) {
+	t.Parallel()
+
+	domainName := os.Getenv("GOOGLEWORKSPACE_DOMAIN")
+
+	if domainName == "" {
+		t.Skip("GOOGLEWORKSPACE_DOMAIN needs to be set to run this test")
+	}
+
+	testUserVals := map[string]interface{}{
+		"domainName": domainName,
+		"userEmail":  fmt.Sprintf("tf-test-%s", acctest.RandString(10)),
+		"password":   acctest.RandString(10),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceUser_basic(testUserVals),
+			},
+			{
+				Config: testAccResourceUser_renameKeepAlias(testUserVals),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("googleworkspace_user.my-new-user", "primary_email",
+						Nprintf("%{userEmail}-renamed@%{domainName}", testUserVals)),
+					resource.TestCheckResourceAttr("googleworkspace_user.my-new-user", "aliases.#", "1"),
+					resource.TestCheckTypeSetElemAttr("googleworkspace_user.my-new-user", "aliases.*",
+						Nprintf("%{userEmail}@%{domainName}", testUserVals)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceUser_renameDropAlias(t *testing.T) {
+	t.Parallel()
+
+	domainName := os.Getenv("GOOGLEWORKSPACE_DOMAIN")
+
+	if domainName == "" {
+		t.Skip("GOOGLEWORKSPACE_DOMAIN needs to be set to run this test")
+	}
+
+	testUserVals := map[string]interface{}{
+		"domainName": domainName,
+		"userEmail":  fmt.Sprintf("tf-test-%s", acctest.RandString(10)),
+		"password":   acctest.RandString(10),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceUser_basic(testUserVals),
+			},
+			{
+				Config: testAccResourceUser_renameDropAlias(testUserVals),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("googleworkspace_user.my-new-user", "primary_email",
+						Nprintf("%{userEmail}-renamed@%{domainName}", testUserVals)),
+					resource.TestCheckResourceAttr("googleworkspace_user.my-new-user", "aliases.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func testAccResourceUser_basic(testUserVals map[string]interface{}) string {
 	return Nprintf(`
 resource "googleworkspace_user" "my-new-user" {
@@ -336,6 +406,44 @@ resource "googleworkspace_user" "my-new-user" {
   name {
     family_name = "Scott"
     given_name = "Michael"
+  }
+}
+`, testUserVals)
+}
+
+func testAccResourceUser_renameKeepAlias(testUserVals map[string]interface{}) string {
+	return Nprintf(`
+resource "googleworkspace_user" "my-new-user" {
+  primary_email = "%{userEmail}-renamed@%{domainName}"
+  password = "%{password}"
+
+  aliases = ["%{userEmail}@%{domainName}"]
+
+  name {
+    family_name = "Scott"
+    given_name = "Michael"
+  }
+
+  timeouts {
+    update = "15m"
+  }
+}
+`, testUserVals)
+}
+
+func testAccResourceUser_renameDropAlias(testUserVals map[string]interface{}) string {
+	return Nprintf(`
+resource "googleworkspace_user" "my-new-user" {
+  primary_email = "%{userEmail}-renamed@%{domainName}"
+  password = "%{password}"
+
+  name {
+    family_name = "Scott"
+    given_name = "Michael"
+  }
+
+  timeouts {
+    update = "15m"
   }
 }
 `, testUserVals)
