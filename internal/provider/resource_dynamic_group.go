@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 
 	"google.golang.org/api/cloudidentity/v1"
 )
+
+var dynamicGroupGuestUserQuery = regexp.MustCompile(`^\s*\((.*)\)\s*&&\s*user\.is_guest_user\s*==\s*false\s*$`)
 
 type Query struct {
 	Query        string `json:"query"`
@@ -203,7 +206,7 @@ func resourceDynamicGroupRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("name", group.DisplayName)
 	d.Set("email", group.GroupKey.Id)
 	d.Set("description", group.Description)
-	d.Set("query", group.DynamicGroupMetadata.Queries[0].Query)
+	d.Set("query", normalizeDynamicGroupQuery(group.DynamicGroupMetadata.Queries[0].Query))
 	d.Set("labels", group.Labels)
 
 	d.SetId(group.Name)
@@ -350,6 +353,15 @@ func resourceDynamicGroupDelete(ctx context.Context, d *schema.ResourceData, met
 	log.Printf("[DEBUG] Finished deleting Dynamic Group %q: %#v", d.Id(), email)
 
 	return diags
+}
+
+func normalizeDynamicGroupQuery(query string) string {
+	matches := dynamicGroupGuestUserQuery.FindStringSubmatch(query)
+	if matches == nil {
+		return query
+	}
+
+	return matches[1]
 }
 
 // I'm leaving this here but it does not work. UpdatedKeys() returns an empty
