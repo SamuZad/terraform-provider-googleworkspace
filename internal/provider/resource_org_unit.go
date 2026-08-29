@@ -188,7 +188,11 @@ func resourceOrgUnitRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diags
 	}
 
-	orgUnit, err := orgUnitsService.Get(client.Customer, d.Id()).Do()
+	var orgUnit *directory.OrgUnit
+	err := retryNotFound(ctx, func() (e error) {
+		orgUnit, e = orgUnitsService.Get(client.Customer, d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}

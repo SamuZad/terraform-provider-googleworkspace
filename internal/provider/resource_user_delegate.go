@@ -107,7 +107,11 @@ func resourceUserDelegateRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	log.Printf("[INFO] Reading delegate %q for user %q", delegateEmail, userId)
 
-	delegate, err := usersSettingsDelegatesService.Get(userId, delegateEmail).Do()
+	var delegate *gmail.Delegate
+	err := retryNotFound(ctx, func() (e error) {
+		delegate, e = usersSettingsDelegatesService.Get(userId, delegateEmail).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}

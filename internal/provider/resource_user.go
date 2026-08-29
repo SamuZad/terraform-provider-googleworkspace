@@ -1242,7 +1242,11 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diags
 	}
 
-	user, err := usersService.Get(d.Id()).Projection("full").Do()
+	var user *directory.User
+	err := retryNotFound(ctx, func() (e error) {
+		user, e = usersService.Get(d.Id()).Projection("full").Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, primaryEmail)
 	}

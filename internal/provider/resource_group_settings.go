@@ -470,7 +470,11 @@ func resourceGroupSettingsRead(ctx context.Context, d *schema.ResourceData, meta
 		return diags
 	}
 
-	group, err := groupsService.Get(d.Id()).Do()
+	var group *groupssettings.Groups
+	err := retryNotFound(ctx, func() (e error) {
+		group, e = groupsService.Get(d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Get("email").(string))
 	}

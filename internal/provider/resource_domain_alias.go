@@ -122,7 +122,11 @@ func resourceDomainAliasRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	log.Printf("[DEBUG] Getting DomainAlias %q: %#v", d.Id(), d.Id())
 
-	domainAlias, err := domainAliasesService.Get(client.Customer, d.Id()).Do()
+	var domainAlias *directory.DomainAlias
+	err := retryNotFound(ctx, func() (e error) {
+		domainAlias, e = domainAliasesService.Get(client.Customer, d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}

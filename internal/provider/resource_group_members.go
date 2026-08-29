@@ -204,12 +204,15 @@ func resourceGroupMembersRead(ctx context.Context, d *schema.ResourceData, meta 
 	var result []*directory.Member
 	membersCall := membersService.List(groupId).MaxResults(200).IncludeDerivedMembership(includeDerivedMembership)
 
-	err := membersCall.Pages(ctx, func(resp *directory.Members) error {
-		for _, member := range resp.Members {
-			result = append(result, member)
-		}
+	err := retryNotFound(ctx, func() error {
+		result = nil
+		return membersCall.Pages(ctx, func(resp *directory.Members) error {
+			for _, member := range resp.Members {
+				result = append(result, member)
+			}
 
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())

@@ -224,7 +224,11 @@ func resourceGroupMemberRead(ctx context.Context, d *schema.ResourceData, meta i
 	groupId := d.Get("group_id").(string)
 	memberId := d.Get("member_id").(string)
 
-	member, err := membersService.Get(groupId, memberId).Do()
+	var member *directory.Member
+	err := retryNotFound(ctx, func() (e error) {
+		member, e = membersService.Get(groupId, memberId).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Id())
 	}

@@ -213,7 +213,11 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diags
 	}
 
-	group, err := groupsService.Get(d.Id()).Do()
+	var group *directory.Group
+	err := retryNotFound(ctx, func() (e error) {
+		group, e = groupsService.Get(d.Id()).Do()
+		return
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, d.Get("email").(string))
 	}
