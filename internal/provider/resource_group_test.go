@@ -117,6 +117,74 @@ func TestAccResourceGroup_full(t *testing.T) {
 	})
 }
 
+func TestAccResourceGroup_renameKeepAlias(t *testing.T) {
+	t.Parallel()
+
+	domainName := os.Getenv("GOOGLEWORKSPACE_DOMAIN")
+
+	if domainName == "" {
+		t.Skip("GOOGLEWORKSPACE_DOMAIN needs to be set to run this test")
+	}
+
+	testGroupVals := map[string]interface{}{
+		"domainName": domainName,
+		"email":      fmt.Sprintf("tf-test-%s", acctest.RandString(10)),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceGroup_basic(testGroupVals),
+			},
+			{
+				Config: testAccResourceGroup_renameKeepAlias(testGroupVals),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("googleworkspace_group.my-group", "email",
+						Nprintf("%{email}-renamed@%{domainName}", testGroupVals)),
+					resource.TestCheckResourceAttr("googleworkspace_group.my-group", "aliases.#", "1"),
+					resource.TestCheckTypeSetElemAttr("googleworkspace_group.my-group", "aliases.*",
+						Nprintf("%{email}@%{domainName}", testGroupVals)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceGroup_renameDropAlias(t *testing.T) {
+	t.Parallel()
+
+	domainName := os.Getenv("GOOGLEWORKSPACE_DOMAIN")
+
+	if domainName == "" {
+		t.Skip("GOOGLEWORKSPACE_DOMAIN needs to be set to run this test")
+	}
+
+	testGroupVals := map[string]interface{}{
+		"domainName": domainName,
+		"email":      fmt.Sprintf("tf-test-%s", acctest.RandString(10)),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceGroup_basic(testGroupVals),
+			},
+			{
+				Config: testAccResourceGroup_renameDropAlias(testGroupVals),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("googleworkspace_group.my-group", "email",
+						Nprintf("%{email}-renamed@%{domainName}", testGroupVals)),
+					resource.TestCheckResourceAttr("googleworkspace_group.my-group", "aliases.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func testAccResourceGroup_basic(testGroupVals map[string]interface{}) string {
 	return Nprintf(`
 resource "googleworkspace_group" "my-group" {
@@ -145,6 +213,24 @@ resource "googleworkspace_group" "my-group" {
   description = "my new description"
 
   aliases = ["%{email}-alias-2@%{domainName}", "%{email}-new-alias@%{domainName}"]
+}
+`, testGroupVals)
+}
+
+func testAccResourceGroup_renameKeepAlias(testGroupVals map[string]interface{}) string {
+	return Nprintf(`
+resource "googleworkspace_group" "my-group" {
+  email = "%{email}-renamed@%{domainName}"
+
+  aliases = ["%{email}@%{domainName}"]
+}
+`, testGroupVals)
+}
+
+func testAccResourceGroup_renameDropAlias(testGroupVals map[string]interface{}) string {
+	return Nprintf(`
+resource "googleworkspace_group" "my-group" {
+  email = "%{email}-renamed@%{domainName}"
 }
 `, testGroupVals)
 }
