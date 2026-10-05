@@ -9,6 +9,7 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -34,6 +35,11 @@ func resourceGroupMembers() *schema.Resource {
 		ReadContext:   resourceGroupMembersRead,
 		UpdateContext: resourceGroupMembersUpdate,
 		DeleteContext: resourceGroupMembersDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(5 * time.Minute),
+			Update: schema.DefaultTimeout(5 * time.Minute),
+		},
 
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceGroupMembersImport,
@@ -173,6 +179,15 @@ func resourceGroupMembersCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	d.SetId(fmt.Sprintf("groups/%s", groupId))
+
+	// INSERT is eventually consistent: a List issued right away can omit a
+	// member just inserted, and Read would record that stale snapshot.
+	err := waitForGroupMembers(ctx, d.Timeout(schema.TimeoutCreate), expectedGroupMemberRoles(members.List()), func() (groupMemberRoles, error) {
+		return listGroupMemberRoles(ctx, membersService, groupId)
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return resourceGroupMembersRead(ctx, d, meta)
 }
@@ -344,6 +359,15 @@ func resourceGroupMembersUpdate(ctx context.Context, d *schema.ResourceData, met
 
 		d.SetId(fmt.Sprintf("groups/%s", groupId))
 		log.Printf("[DEBUG] Finished updating Group Members %q", groupId)
+	}
+
+	// Inserts, updates and deletes are eventually consistent: wait until the
+	// listing shows exactly the declared membership before Read records it.
+	err := waitForGroupMembers(ctx, d.Timeout(schema.TimeoutUpdate), expectedGroupMemberRoles(n.(*schema.Set).List()), func() (groupMemberRoles, error) {
+		return listGroupMemberRoles(ctx, membersService, groupId)
+	})
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceGroupMembersRead(ctx, d, meta)
