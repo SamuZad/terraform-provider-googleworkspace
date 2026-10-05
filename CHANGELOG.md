@@ -2,6 +2,7 @@
 
 BUG FIXES:
 
+* directory: `googleworkspace_group_members` waits for the member listing to match the declared membership after create and update, instead of recording the first (possibly stale) listing in state ([#40](https://github.com/SamuZad/terraform-provider-googleworkspace/issues/40))
 * directory: `googleworkspace_group_settings` is now removed from state on a 404 read (e.g. when its group is deleted outside Terraform) instead of failing the plan ([#30](https://github.com/SamuZad/terraform-provider-googleworkspace/pull/30))
 
 ## 0.7.0 (June 10, 2022)

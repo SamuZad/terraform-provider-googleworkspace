@@ -67,6 +67,7 @@ resource "googleworkspace_group_members" "sales" {
 ### Optional
 
 - `members` (Block Set) The members of the group (see [below for nested schema](#nestedblock--members))
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
@@ -101,6 +102,14 @@ Read-Only:
 
 - `id` (String) The unique ID of the group member. A member id can be used as a member request URI's memberKey.
 - `status` (String) Status of member.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `update` (String)
 
 ## Import
 
