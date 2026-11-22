@@ -1,3 +1,11 @@
+## 0.13.0 (Unreleased)
+
+SECURITY:
+
+* build: release binaries are built with Go 1.27.4. `go.mod` now sets `toolchain go1.27.4`, and the release workflow reads it. Earlier releases were built with Go 1.25.0 and carried known standard library vulnerabilities.
+* deps: updated all Go module dependencies, including `golang.org/x/net`, `golang.org/x/crypto`, `google.golang.org/grpc` and `github.com/hashicorp/terraform-plugin-sdk/v2` (2.33.0 to 2.41.1). The provider schema is unchanged.
+* ci: new `govulncheck` workflow on push, pull request, and weekly. Dependabot groups Go module updates.
+
 ## 0.8.0 (Unreleased)
 
 BUG FIXES:

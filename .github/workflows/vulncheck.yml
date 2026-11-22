@@ -1,0 +1,32 @@
+# Known-vulnerability check for the Go toolchain and module dependencies.
+#
+# govulncheck reports only vulnerabilities that the provider code can reach.
+# The weekly run catches new advisories for code that has not changed.
+name: Vulnerability check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    # Mondays 06:17 UTC.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          # Uses the toolchain directive in go.mod, so the check sees the
+          # same standard library that the release build uses.
+          go-version-file: 'go.mod'
+          cache: true
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
