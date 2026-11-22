@@ -18,7 +18,7 @@ This fork is maintained by [@SamuZad](https://github.com/SamuZad). It descends f
 ## Requirements
 
 -	[Terraform](https://www.terraform.io/downloads.html) >= 0.13.x (or [OpenTofu](https://opentofu.org))
--	[Go](https://golang.org/doc/install) >= 1.24 (to build the provider)
+-	[Go](https://golang.org/doc/install) >= 1.26 (to build the provider)
 
 ## Upgrading the provider
 
